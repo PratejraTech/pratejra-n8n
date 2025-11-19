@@ -1,0 +1,367 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 23,
+              "minute": 59
+            }
+          ]
+        }
+      },
+      "id": "545fb586-fb59-476d-a272-b04f590cff38",
+      "name": "Daily Cron 21:30",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "id": "e90de0b7-3e28-4896-bfae-1bf36a660625",
+      "name": "Get Notion Items",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        64
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "2OfXcq3h1ULpRC7f",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "PratejraTech"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "daily-digest",
+          "mode": "name"
+        }
+      },
+      "id": "458c2a00-a91b-4076-b75f-314e879a3bb8",
+      "name": "Commit Digest to GitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        656,
+        576
+      ],
+      "webhookId": "4aabaa90-7dc1-4356-ba5a-67d066425d11",
+      "credentials": {
+        "githubApi": {
+          "id": "rawTi1346lYf1zXH",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output[0].content[0].text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=\"You are a research coach for a developer and researcher.\\n\"             \"You receive a list of today's Notion research items and their JSON data.\\n\"             \"You must return a JSON object that can be parsed into the following Pydantic model:\\n\\n\"             f\"{parser.get_format_instructions()}\\n\\n\"             \"Guidelines:\\n\"             \"- summary: concise but insightful narrative of today's work.\\n\"             \"- next_steps: 3-10 concrete actions for future research/experiments.\\n\"             \"- jira_tasks: 0-10 tasks derived from next_steps or items.\\n\"             \"- commit_message: short Git commit message summarizing the day.\""
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Here is the digest:\\n\n{{ $json.output[0].content[0].text }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        192,
+        240
+      ],
+      "id": "885da324-dd1b-470a-b897-3c418ae4834e",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 3000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        400
+      ],
+      "id": "e7a118dc-13cb-4848-8b98-1344742b79ca",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "pVQ4AERRW8KL2qGR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a strong executive assistant. You summarise research and activities completed today and output in a structured format in pure text. At the end of the digest you will offer challenges and divergent areas in which to explore related to the day.\nStructure it as:\nDate: {{ $now }}\nTopics Covered: []\nFocus:\nSummary:\nNext Steps:\nChallenges for the day:\nDivergent Ideas:"
+            },
+            {
+              "content": "=Digest input for the day to be summarized. It is unstructured and you will need to analyze it\n{{ $json.digestInput }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        80
+      ],
+      "id": "64841ea6-ad5f-432a-bab9-5621c356597e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "pVQ4AERRW8KL2qGR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "10099",
+          "mode": "list",
+          "cachedResultName": "Daily Digest"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "10108",
+          "mode": "list",
+          "cachedResultName": "Task"
+        },
+        "summary": "Creating from daily digest",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        944,
+        192
+      ],
+      "id": "8ab976e6-ee5d-47d1-bbd2-849eed4277dc",
+      "name": "Create an issue",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "SnyMlC2ZKpDMJXDN",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionItems = items.map(i => i.json);\n\n// Optionally filter to today's items only (if you have a date property)\n// For now, pass everything to GPT and let it figure out what is relevant.\n\nconst textPreview = notionItems\n  .map((p, idx) => {\n    const name = (p.properties && p.properties.Name && p.properties.Name.title && p.properties.Name.title[0] && p.properties.Name.title[0].plain_text) || `Item ${idx + 1}`;\n    return `- ${name}`;\n  })\n  .join('\\n');\n\nreturn [\n  {\n    json: {\n      notionItems,\n      digestInput: `Research items touched today (approx):\\n${textPreview}\\n\\nFull JSON data:\\n${JSON.stringify(notionItems, null, 2)}`\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        64
+      ],
+      "id": "f9b27f81-f9c0-422a-a455-0053ec7985d1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "jira_tasks",
+              "description": "Jira Tasks to be added"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        192
+      ],
+      "id": "e397a472-1e93-4086-8003-2ba47cb26981",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        304
+      ],
+      "id": "62244207-2986-40da-be89-ac84cf3e7afe",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "pVQ4AERRW8KL2qGR",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Cron 21:30": {
+      "main": [
+        [
+          {
+            "node": "Get Notion Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Notion Items": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Digest to GitHub": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Commit Digest to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Create an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e579bc0a077a33b2a4fe393ce9a6723cba724ff58de0ea3e8a5ef589a6263d5"
+  }
+}

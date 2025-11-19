@@ -1,0 +1,538 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "n8n-json",
+        "fileName": "=  {{$workflow.name}}_{{$today}}_{{$itemIndex}}",
+        "binaryPropertyName": "=file_out",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        -192
+      ],
+      "id": "d47bb15f-4d55-46d0-8788-b8b770c1b253",
+      "name": "Upload a file",
+      "credentials": {
+        "aws": {
+          "id": "jxIbvpVXm6Wr8tDv",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "databaseId": {
+          "__rl": true,
+          "value": "2ad8ff04-48cc-80dc-89a8-f4a4f1592eaa",
+          "mode": "list",
+          "cachedResultName": "AI Ideas",
+          "cachedResultUrl": "https://www.notion.so/2ad8ff0448cc80dc89a8f4a4f1592eaa"
+        }
+      },
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        -272
+      ],
+      "id": "65557c62-621d-4651-b1e9-b750df8f957a",
+      "name": "Notion Trigger",
+      "credentials": {
+        "notionApi": {
+          "id": "2OfXcq3h1ULpRC7f",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this and fit the schema provided\n{{ $json.output[0].content[0].text }}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "System Prompt:\nYou are a technology expert. You transform business descriptions into concise documentation and a guide for the user. Take the users message and analyze it iteratively. Your output fields are defined by a schema. \nDo not mention the question. Only fill in the fields. If you are unsure, do not fill in the field. You have {{web search}} as a tool. Keep it clear and do not include code.",
+          "maxIterations": 5,
+          "enableStreaming": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        224,
+        -464
+      ],
+      "id": "43b95c9b-29c2-44f8-a273-0c75b89ee1f9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "2ad8ff04-48cc-80c7-a489-d0a1726db91f",
+          "mode": "id"
+        },
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Analysis|rich_text",
+              "richText": true,
+              "text": {
+                "text": [
+                  {
+                    "text": "={{ $json.templatedOutput }}",
+                    "annotationUi": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        -496
+      ],
+      "id": "ae8164be-f6e5-4c9d-b658-3834f9f5c127",
+      "name": "Update a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "2OfXcq3h1ULpRC7f",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": "application-ideas",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "=go_to_market",
+              "fieldValue": "={{ $json.output.go_to_market_strategy }}"
+            },
+            {
+              "fieldId": "business_model",
+              "fieldValue": "={{ $json.output.business_model }}"
+            },
+            {
+              "fieldId": "purpose",
+              "fieldValue": "={{ $json.output.purpose_and_core_capability }}"
+            },
+            {
+              "fieldId": "key_features",
+              "fieldValue": "={{ $json.output.key_features }}"
+            },
+            {
+              "fieldId": "draft_architecture",
+              "fieldValue": "={{ $json.output.suggested_architecture }}"
+            },
+            {
+              "fieldId": "next_steps",
+              "fieldValue": "={{ $json.output.next_steps }}"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsDynamoDb",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        -400
+      ],
+      "id": "75d5166e-7bb3-4f18-b879-2c476d552651",
+      "name": "Create or update an item",
+      "credentials": {
+        "aws": {
+          "id": "jxIbvpVXm6Wr8tDv",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        -128
+      ],
+      "id": "ea5a5acf-19c5-4627-84fd-913a8ba22868",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": false,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "a5c651ae-60d5-4f62-9a9e-807341a7c67e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "10266514-156b-4f84-90ef-06d2e4c181e7",
+                    "leftValue": false,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "edbcba88-e5f8-47fe-bf24-32cfac28e1c9",
+                    "leftValue": false,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1472,
+        64
+      ],
+      "id": "56c2d937-ede8-48c6-87e8-32b150e9d1c4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=The business to analyze is:\n\nName: {{ $json[\"Doc name\"] }}\nDescription: {{ $json.Description }}\nSubject Area: {{ $json.Category[0] }}"
+            },
+            {
+              "role": "system",
+              "content": "You are a software business expert. The user will provide a simple name and description of a concept that you will expand on. You must provide:\n{- Technical Description:\n- Business Model Description:\n- Suggested Draft Architecture}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -224
+      ],
+      "id": "899606f7-ff04-4850-9b53-1cfa430881a8",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "pVQ4AERRW8KL2qGR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You develop complex product requirements documents for teams that request them."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1776,
+        -48
+      ],
+      "id": "086f3bb5-2832-49c4-b119-14cd7f8eadbc",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The full output to be parsed:\n{{ JSON.stringify($json.output, null, 2) }}\n{{ JSON.stringify($json.templatedOutput) }}",
+        "options": {
+          "systemMessage": "Analyze the full information provided. You must provide:\n- Product Requirements Document:\n- Architecture Graph:\n- Phased Build (1-4):"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1008,
+        -688
+      ],
+      "id": "a8ec0880-6236-49cc-833d-efd280dc55c7",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"metadata\": {\n    \"project_name\": \"\",\n    \"input_summary\": \"\",\n    \"tags\": []\n  },\n  \"business_value\": {\n    \"description\": \"\"\n  },\n  \"technical\": {\n    \"typescript\": \"\",\n    \"python\": \"\"\n  },\n  \"product_requirements\": {\n    \"summary\": \"\",\n    \"functional_requirements\": [],\n    \"non_functional_requirements\": []\n  },\n  \"architecture\": {\n    \"summary\": \"\",\n    \"components\": []\n  }\n}",
+        "autoFix": true,
+        "customizeRetryPrompt": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        -544
+      ],
+      "id": "b6eecd27-af6d-4936-a340-66b9b61f75c5",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * This expects each item to have:\n *   item.json.allFields\n * and produces a formatted markdown-style document per item\n * as item.json.templatedOutput\n */\n\nfunction buildDoc(allFields) {\n  const f = allFields || {};\n\n  const get = (path, fallback = \"\") =>\n    f[path] !== undefined ? f[path] : fallback;\n\n  const output = `\n# 📘 Product Requirements Document (PRD)\n\n**Summary:**  \n${get(\"product_requirements.summary\", \"*No PRD summary provided*\")}\n\n---\n\n## Functional Requirements\n${get(\"product_requirements.functional_requirements\", \"*No functional requirements provided*\")}\n\n---\n\n## Non-Functional Requirements\n${get(\"product_requirements.non_functional_requirements\", \"*No non-functional requirements provided*\")}\n\n---\n\n# 🏗️ Architecture Draft  \n_(Frontend: NextJS • Backend: Python)_\n\n## Architecture Summary\n${get(\"architecture.summary\", \"*No architecture summary provided*\")}\n\n---\n\n## Architecture Components\n${get(\"architecture.components\", \"*No architecture components defined*\")}\n\n---\n\n# 🚀 Build Plan (4-Phases)\n\n## Phase 1 — Foundation\n${get(\"build_plan.0\", \"*Phase 1 missing*\")}\n\n## Phase 2 — Core Features\n${get(\"build_plan.1\", \"*Phase 2 missing*\")}\n\n## Phase 3 — Integrations & Testing\n${get(\"build_plan.2\", \"*Phase 3 missing*\")}\n\n## Phase 4 — Deployment & Optimisation\n${get(\"build_plan.3\", \"*Phase 4 missing*\")}\n`;\n\n  return output.trim();\n}\n\nreturn items.map(item => {\n  const allFields = (item.json && item.json.allFields) || {};\n  const templatedOutput = buildDoc(allFields);\n\n  return {\n    json: {\n      ...item.json,\n      templatedOutput,\n    },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -624
+      ],
+      "id": "c02054ba-ccde-460b-b6dc-8e09fa1c4df2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * This expects \"allFields\" to exist on the first item:\n *   items[0].json.allFields\n * and produces a formatted markdown-style document.\n */\n\nconst item = items[0] || { json: {} };\nconst f = item.json.allFields || {}; // shortcut\n\nfunction get(path, fallback = \"\") {\n  return f[path] !== undefined ? f[path] : fallback;\n}\n\n// Build templated output\nconst output = `\n# 📘 Product Requirements Document (PRD)\n\n**Summary:**  \n${get(\"product_requirements.summary\", \"*No PRD summary provided*\")}\n\n---\n\n## Functional Requirements\n${get(\"product_requirements.functional_requirements\", \"*No functional requirements provided*\")}\n\n---\n\n## Non-Functional Requirements\n${get(\"product_requirements.non_functional_requirements\", \"*No non-functional requirements provided*\")}\n\n---\n\n# 🏗️ Architecture Draft  \n_(Frontend: NextJS • Backend: Python)_\n\n## Architecture Summary\n${get(\"architecture.summary\", \"*No architecture summary provided*\")}\n\n---\n\n## Architecture Components\n${get(\"architecture.components\", \"*No architecture components defined*\")}\n\n---\n\n# 🚀 Build Plan (4-Phases)\n\n## Phase 1 — Foundation\n${get(\"build_plan.0\", \"*Phase 1 missing*\")}\n\n## Phase 2 — Core Features\n${get(\"build_plan.1\", \"*Phase 2 missing*\")}\n\n## Phase 3 — Integrations & Testing\n${get(\"build_plan.2\", \"*Phase 3 missing*\")}\n\n## Phase 4 — Deployment & Optimisation\n${get(\"build_plan.3\", \"*Phase 4 missing*\")}\n`;\n\nreturn [\n  {\n    json: {\n      templatedOutput: output.trim(),\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        -704
+      ],
+      "id": "c9d285ad-42d9-4cdc-8171-63d72b30f91b",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file_out",
+        "options": {
+          "fileName": "={{$itemIndex}}-{{$workflow.name}}-{{ $today }}.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        -272
+      ],
+      "id": "88ff0cd7-31ff-4a19-bef9-9bea6ae0a8fd",
+      "name": "Convert to File"
+    }
+  ],
+  "connections": {
+    "Upload a file": {
+      "main": [
+        []
+      ]
+    },
+    "Notion Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create or update an item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update a database page",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Update a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e579bc0a077a33b2a4fe393ce9a6723cba724ff58de0ea3e8a5ef589a6263d5"
+  }
+}

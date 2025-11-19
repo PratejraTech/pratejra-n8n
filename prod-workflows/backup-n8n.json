@@ -1,0 +1,487 @@
+{
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "0bdb298e-20f1-424a-84b6-0c1560f8edb5",
+        "name": "On clicking 'execute'",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [
+          -112,
+          0
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "filters": {},
+          "requestOptions": {}
+        },
+        "id": "81e7440d-faff-4336-9c2b-ea17dbbc567c",
+        "name": "n8n",
+        "type": "n8n-nodes-base.n8n",
+        "position": [
+          736,
+          0
+        ],
+        "retryOnFail": true,
+        "typeVersion": 1,
+        "alwaysOutputData": true,
+        "credentials": {
+          "n8nApi": {
+            "id": "kUbt18vVkPFJFtF7",
+            "name": "n8n account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 4
+              }
+            ]
+          }
+        },
+        "id": "56e63c9c-1502-422f-816d-9b68c5e35e80",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "position": [
+          -112,
+          272
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": false,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "538fc29d-2693-4c62-9848-bdcaf8566909",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                },
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "={{ $('create new file').item.json.id }}"
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {
+            "ignoreCase": true
+          }
+        },
+        "id": "fadc019f-a13d-4c00-8b22-bfe1c766a46b",
+        "name": "Filter",
+        "type": "n8n-nodes-base.filter",
+        "position": [
+          1584,
+          32
+        ],
+        "typeVersion": 2.2
+      },
+      {
+        "parameters": {
+          "resource": "bucket",
+          "name": "n8n-backups-314",
+          "additionalFields": {
+            "bucketObjectLockEnabled": true,
+            "grantFullControl": true
+          }
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          464,
+          160
+        ],
+        "id": "097c6389-7109-4696-afb9-9eccc5b11199",
+        "name": "Create a bucket",
+        "credentials": {
+          "aws": {
+            "id": "mNRHCHXqsmVKEDc1",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "bucketName": "n8n-backups-314",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          736,
+          160
+        ],
+        "id": "e39230f9-a238-47b0-aa06-80ec229d607e",
+        "name": "Get many files",
+        "credentials": {
+          "aws": {
+            "id": "mNRHCHXqsmVKEDc1",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "upload",
+          "bucketName": "n8n-backups-314",
+          "fileName": "=n8n-backup-{{ $('Convert to File') }}",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          160
+        ],
+        "id": "e3196c8c-42c4-40a9-a147-fd72c6d33d52",
+        "name": "Upload a file",
+        "credentials": {
+          "aws": {
+            "id": "mNRHCHXqsmVKEDc1",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "delete",
+          "bucketName": "n8n-backups-314",
+          "fileKey": "=",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          1776,
+          32
+        ],
+        "id": "ba312f63-c9d6-4023-90bc-90dba233baa2",
+        "name": "Delete a file",
+        "credentials": {
+          "aws": {
+            "id": "mNRHCHXqsmVKEDc1",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "bucket",
+          "operation": "getAll",
+          "limit": 20
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          128,
+          16
+        ],
+        "id": "1b84d616-6a23-468e-a5e8-a3b2f5f50874",
+        "name": "Get many buckets",
+        "credentials": {
+          "aws": {
+            "id": "mNRHCHXqsmVKEDc1",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.Name }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      },
+                      "id": "ff52aac7-a981-4910-8314-c1f67d91d892"
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.3,
+        "position": [
+          1744,
+          256
+        ],
+        "id": "041296f1-f697-4c38-82f9-6b73828a0411",
+        "name": "Switch"
+      },
+      {
+        "parameters": {
+          "options": {
+            "reset": false
+          }
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1344,
+          288
+        ],
+        "id": "cb2d563b-3069-45ef-8ef7-2cfdefc8cc25",
+        "name": "Loop Over Items"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "ca116ab4-357d-4062-b38a-ad4fb8e3d472",
+                "leftValue": "",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1552,
+          368
+        ],
+        "id": "21026406-d609-4928-b694-81155185ffda",
+        "name": "If1"
+      },
+      {
+        "parameters": {
+          "mergeByFields": {
+            "values": [
+              {},
+              {
+                "field1": "Name"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.compareDatasets",
+        "typeVersion": 2.3,
+        "position": [
+          928,
+          48
+        ],
+        "id": "1a52af6b-06bc-43c7-993e-04bde844cdbe",
+        "name": "Compare Datasets"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "000dd3b8-9656-430f-9c05-8ff6bc91c333",
+                "leftValue": "={{ $json.Name }}",
+                "rightValue": "n8n-backups-314",
+                "operator": {
+                  "type": "string",
+                  "operation": "contains"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          288,
+          16
+        ],
+        "id": "777e6100-d0c9-4e09-8e21-2a16cecafca7",
+        "name": "Filter1"
+      }
+    ],
+    "connections": {
+      "On clicking 'execute'": {
+        "main": [
+          [
+            {
+              "node": "Get many buckets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "n8n": {
+        "main": [
+          [
+            {
+              "node": "Compare Datasets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get many buckets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter": {
+        "main": [
+          [
+            {
+              "node": "Delete a file",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create a bucket": {
+        "main": [
+          []
+        ]
+      },
+      "Get many files": {
+        "main": [
+          [
+            {
+              "node": "Compare Datasets",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Upload a file": {
+        "main": [
+          []
+        ]
+      },
+      "Get many buckets": {
+        "main": [
+          [
+            {
+              "node": "Filter1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [
+            {
+              "node": "Switch",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If1": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compare Datasets": {
+        "main": [
+          [
+            {
+              "node": "Upload a file",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [],
+          [],
+          []
+        ]
+      },
+      "Filter1": {
+        "main": [
+          [
+            {
+              "node": "n8n",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get many files",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "35bad3ea3aebe031c7cc53275ce7fce7aa236450f2236c8969fd2c169bde5bee"
+    }
+  }
