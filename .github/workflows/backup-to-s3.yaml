@@ -1,0 +1,59 @@
+name: Git Repo Backup to S3
+
+on:
+  # Scheduled daily at 02:00 UTC
+  schedule:
+    - cron: "0 2 * * *"
+  # Manual trigger for testing
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write    # required for OIDC
+  contents: read     # required to checkout
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # IMPORTANT: we want all history
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create git bundle
+        id: create_bundle
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d_%H-%M-%S")
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          BUNDLE_NAME="${REPO_NAME}-${TIMESTAMP}.bundle"
+
+          echo "Creating bundle: ${BUNDLE_NAME}"
+          git bundle create "${BUNDLE_NAME}" --all
+
+          echo "bundle_name=${BUNDLE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "timestamp=${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload bundle to S3
+        run: |
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          BUNDLE_NAME="${{ steps.create_bundle.outputs.bundle_name }}"
+          TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
+
+          # Directory structure: myrepo/backups/YYYY-MM-DD/<bundle>
+          DATE_PREFIX=${TIMESTAMP%_*}  # extract YYYY-MM-DD
+          S3_KEY="${REPO_NAME}/active-workflows/${DATE_PREFIX}/${BUNDLE_NAME}"
+
+          echo "Uploading ${BUNDLE_NAME} to s3://pratejra-git-backups-prod/prod-backups/"
+          aws s3 cp "${BUNDLE_NAME}" "s3://pratejra-git-backups-prod/prod-backups/${S3_KEY}"
