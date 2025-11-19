@@ -1,6 +1,9 @@
 name: Git Repo Backup to S3
 
 on:
+  push:
+    branches:
+      - main
   # Scheduled daily at 02:00 UTC
   schedule:
     - cron: "0 2 * * *"
