@@ -1,3 +1,7 @@
+# This workflow automates the backup of the main branch of this repository to an S3 bucket.
+# It triggers on every push to main, on a daily schedule at 02:00 UTC, and can be manually dispatched.
+# Start Generation Here
+
 name: Git Repo Backup to S3
 
 on:
