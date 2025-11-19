@@ -1,0 +1,30 @@
+{
+  "ruleType": "Always",
+  "description": "Project-wide instructions: Do not alter existing files except by adding a docstring/header at the top. When creating new files (e.g., AGENTS.md), follow the conventions. This project is an automation-platform for workflows, shared code/snippets, schemas, configs and docs.",
+  "rules": [
+    {
+      "description": "Do not modify existing code, JSON, schema, config or doc files except to add a top-of-file docstring/header comment with purpose, author and date.",
+      "match": ".*\\.(json|js|yaml|md)$",
+      "action": "only_add_header",
+      "header_template": "/*\n * Purpose: {filePurpose}\n * Created: {date}\n * Author: {author}\n */\n"
+    },
+    {
+      "description": "When generating new files, especially documentation or agent definition files, place them into root or appropriate folder and follow naming conventions described in docs.",
+      "match": "AGENTS\\.md",
+      "action": "create_if_missing",
+      "template": "# Agents for Automation Platform\n\n"
+    },
+    {
+      "description": "Never rewrite or refactor existing file content beyond adding the top header; modifications to business logic or structure must be via new files or new versions.",
+      "match": ".*",
+      "action": "restrict_modifications",
+      "allowed_modification_types": ["add_header"]
+    },
+    {
+      "description": "When creating new workflow JSON files, include required metadata fields: id, version, domain, description, steps.",
+      "match": "workflows/.+\\.json$",
+      "action": "enforce_schema",
+      "schema_reference": "shared/schemas/workflow.metadata.schema.json"
+    }
+  ]
+}

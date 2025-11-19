@@ -1,0 +1,46 @@
+---
+alwaysApply: true
+---
+Always adhere to this folder structure. Files can be created but the only changes to be made are Docstrings explaining functionality. No destructive changes. This is simply a foundation for an automation platform
+```
+automation-platform/
+├── workflows/
+│   ├── platform/
+│   │   ├── error_central_handler.json
+│   │   ├── notify_slack.json
+│   │   ├── log_event.json
+│   │   └── approvals_generic.json
+│   ├── domain_crm/
+│   │   ├── lead_intake.json
+│   │   ├── lead_enrichment.json
+│   │   └── lead_sync_to_crm.json
+│   ├── domain_infra/
+│   │   ├── infra_deploy_terraform.json
+│   │   └── infra_post_deploy_checks.json
+│   └── meta/
+│       ├── automation_catalog_builder.json
+│       └── workflow_health_check.json
+├── shared/
+│   ├── js_snippets/
+│   │   ├── normalize_contact.js
+│   │   ├── validate_payload.js
+│   │   └── compute_risk_score.js
+│   ├── schemas/
+│   │   ├── contact.schema.json
+│   │   └── incident.schema.json
+│   └── config/
+│       ├── environments.dev.yaml
+│       └── environments.prod.yaml
+├── docs/
+│   ├── WORKFLOW_NAMING.md
+│   ├── ERROR_HANDLING.md
+│   ├── DATA_CONTRACTS.md
+│   └── RUNBOOKS.md
+├── ci/
+│   ├── export_workflows.sh
+│   ├── import_workflows.sh
+│   └── sync_n8n_env.yml
+└── .github/
+    └── workflows/
+        # GitHub Actions / GitLab CI
+```
