@@ -1,41 +1,46 @@
 <!--
-Purpose: Product Requirements Document - Source of Truth for Automation Platform
-Created: 2025-11-19 19:57:09
-Agent: Init Agent
+Purpose: Product Requirements Document - Source of truth for automation platform
+Created: 2025-11-19 20:18:23
+Agent: PRD Agent
 -->
-# Product Requirements Document
+
+# Product Requirements Document (PRD)
 ## Automation Platform - n8n Workflow Management System
 
-**Version:** 1.0.0  
-**Last Updated:** 2025-11-19 19:57:09  
-**Status:** Foundation Phase
+**Version**: 1.0.0  
+**Last Updated**: 2025-11-19 20:18:23  
+**Status**: Active Development
 
 ---
 
-## Executive Summary
+## 1. Executive Summary
 
-### Platform Purpose and Vision
-The Automation Platform is a comprehensive n8n-based workflow automation system designed to provide a structured, scalable foundation for managing business processes across multiple domains. The platform enables organizations to standardize workflow creation, management, and operations through a domain-driven architecture with shared resources and governance mechanisms.
+### 1.1 Platform Purpose and Vision
 
-### Key Objectives
-1. **Standardization**: Establish consistent patterns for workflow creation, naming, and organization
-2. **Governance**: Implement agent-based modification control to prevent unintended changes
-3. **Scalability**: Support multiple domains (CRM, Infrastructure, Platform, Meta) with shared resources
-4. **Maintainability**: Provide clear documentation, schemas, and operational runbooks
-5. **Traceability**: Enable comprehensive change tracking and system state documentation
+The Automation Platform is a comprehensive n8n-based workflow automation system designed to provide a structured, scalable, and maintainable approach to workflow management. The platform enables organizations to automate business processes across multiple domains while maintaining strict governance, documentation, and operational excellence.
 
-### Target Users/Stakeholders
-- **Workflow Developers**: Create and maintain n8n workflows
-- **Platform Administrators**: Manage platform configuration and operations
-- **Domain Owners**: Oversee domain-specific workflows (CRM, Infrastructure)
-- **Operations Teams**: Execute runbooks and handle incidents
-- **Agents/Automation**: Automated systems that maintain platform integrity
+### 1.2 Key Objectives
+
+- **Centralized Workflow Management**: Provide a single source of truth for all automation workflows
+- **Domain-Based Organization**: Organize workflows by business domains (Platform, CRM, Infrastructure, Meta)
+- **Governance and Control**: Implement agent-based modification control to prevent unintended changes
+- **Operational Excellence**: Ensure error handling, monitoring, and runbook documentation
+- **Scalability**: Support growth through shared resources, schemas, and reusable components
+
+### 1.3 Target Users and Stakeholders
+
+- **Platform Engineers**: Build and maintain workflow infrastructure
+- **Domain Experts**: Create and manage domain-specific workflows (CRM, Infrastructure)
+- **Operations Teams**: Monitor, maintain, and troubleshoot workflows
+- **Developers**: Use shared resources (JS snippets, schemas) in workflow development
+- **Agents**: Automated systems that manage context, documentation, and change tracking
 
 ---
 
-## Platform Architecture
+## 2. Platform Architecture
 
-### Directory Structure
+### 2.1 Directory Structure
+
 The platform follows a strict directory structure defined in `.cursor/rules/folders.mdc`:
 
 ```
@@ -49,366 +54,400 @@ automation-platform/
 │   ├── js_snippets/       # Reusable JavaScript code
 │   ├── schemas/           # JSON schema definitions
 │   └── config/            # Environment configurations
-├── docs/                   # Documentation
-├── ci/                     # CI/CD scripts
-└── .agents/                # Agent tracking and context
+├── docs/                  # Documentation
+├── ci/                    # CI/CD scripts
+├── .cursor/
+│   └── docs/              # PRD and design docs
+└── .agents/               # Agent management
+    ├── contexts/          # File snapshots
+    ├── logs/              # Agent action logs
+    ├── prd_steps/         # Phase documentation
+    └── PRD.md             # Change log
 ```
 
-### Domain Organization
+### 2.2 Domain Organization
 
-#### Platform Domain (`workflows/platform/`)
-Core platform workflows that provide foundational capabilities:
-- **error_central_handler.json**: Central error handling for platform-wide error management
-- **notify_slack.json**: Slack notification system for alerts and communications
-- **log_event.json**: Event logging for platform activity tracking
-- **approvals_generic.json**: Generic approval workflow for platform-wide processes
+#### 2.2.1 Platform Domain
+**Location**: `workflows/platform/`
 
-#### CRM Domain (`workflows/domain_crm/`)
+Core platform workflows that provide foundational services:
+- `error_central_handler.json`: Central error handling for all workflows
+- `notify_slack.json`: Slack notification service
+- `log_event.json`: Event logging service
+- `approvals_generic.json`: Generic approval workflow
+
+#### 2.2.2 CRM Domain
+**Location**: `workflows/domain_crm/`
+
 Customer relationship management workflows:
-- **lead_intake.json**: Capture and process new leads
-- **lead_enrichment.json**: Enhance lead data with additional information
-- **lead_sync_to_crm.json**: Synchronize leads to CRM systems
+- `lead_intake.json`: Capture and process new leads
+- `lead_enrichment.json`: Enrich lead data with additional information
+- `lead_sync_to_crm.json`: Synchronize leads to CRM systems
 
-#### Infrastructure Domain (`workflows/domain_infra/`)
-Infrastructure management workflows:
-- **infra_deploy_terraform.json**: Deploy infrastructure using Terraform
-- **infra_post_deploy_checks.json**: Post-deployment validation checks
+#### 2.2.3 Infrastructure Domain
+**Location**: `workflows/domain_infra/`
 
-#### Meta Domain (`workflows/meta/`)
+Infrastructure automation workflows:
+- `infra_deploy_terraform.json`: Terraform-based infrastructure deployment
+- `infra_post_deploy_checks.json`: Post-deployment validation and checks
+
+#### 2.2.4 Meta Domain
+**Location**: `workflows/meta/`
+
 Meta-level workflows for platform management:
-- **automation_catalog_builder.json**: Build and maintain automation catalog
-- **workflow_health_check.json**: Monitor and validate workflow health
+- `automation_catalog_builder.json`: Build and maintain automation catalog
+- `workflow_health_check.json`: Monitor and check workflow health
 
-### Shared Resources
+### 2.3 Shared Resources
 
-#### JavaScript Snippets (`shared/js_snippets/`)
-Reusable code snippets for common operations:
-- **normalize_contact.js**: Normalize contact data structures
-- **validate_payload.js**: Validate payload structure and integrity
-- **compute_risk_score.js**: Calculate risk scores based on parameters
+#### 2.3.1 JavaScript Snippets
+**Location**: `shared/js_snippets/`
 
-#### Schemas (`shared/schemas/`)
-JSON schema definitions for data validation:
-- **contact.schema.json**: Contact data structure schema
-- **incident.schema.json**: Incident data structure schema
+Reusable JavaScript functions for workflows:
+- `normalize_contact.js`: Normalize contact data structures
+- `validate_payload.js`: Validate payload structure and integrity
+- `compute_risk_score.js`: Calculate risk scores based on parameters
 
-#### Configuration (`shared/config/`)
-Environment-specific configuration files:
-- **environments.dev.yaml**: Development environment settings
-- **environments.prod.yaml**: Production environment settings
+#### 2.3.2 JSON Schemas
+**Location**: `shared/schemas/`
 
-### CI/CD Infrastructure
-Scripts for workflow management and environment synchronization:
-- **export_workflows.sh**: Export n8n workflows from platform
-- **import_workflows.sh**: Import workflows into platform
-- **sync_n8n_env.yml**: Synchronize n8n environment configuration
+Data structure definitions:
+- `contact.schema.json`: Contact data schema
+- `incident.schema.json`: Incident data schema
+
+#### 2.3.3 Configuration Files
+**Location**: `shared/config/`
+
+Environment-specific configurations:
+- `environments.dev.yaml`: Development environment settings
+- `environments.prod.yaml`: Production environment settings
+
+### 2.4 CI/CD Infrastructure
+
+**Location**: `ci/`
+
+Automation scripts for workflow management:
+- `export_workflows.sh`: Export workflows from n8n
+- `import_workflows.sh`: Import workflows into n8n
+- `sync_n8n_env.yml`: Synchronize n8n environment configuration
 
 ---
 
-## Workflow System
+## 3. Workflow System
 
-### n8n Workflow Structure
-Workflows are defined as JSON files following n8n's workflow format. Each workflow includes:
+### 3.1 n8n Workflow Structure
+
+All workflows are n8n-compatible JSON files containing:
 - **Metadata**: Purpose, creation date, agent information
-- **Nodes**: Workflow steps and operations
-- **Connections**: Data flow between nodes
-- **Credentials**: Required authentication (stored separately)
+- **Nodes**: Workflow nodes defining the automation logic
+- **Connections**: Node connections defining workflow execution flow
+- **Credentials**: Required authentication credentials (stored separately)
 
-### Domain-Based Organization
-Workflows are organized by domain to:
-- Enable domain ownership and responsibility
-- Facilitate discovery and maintenance
-- Support domain-specific patterns and conventions
-- Allow independent evolution of domains
+### 3.2 Domain-Based Organization
 
-### Workflow Naming Conventions
-As defined in `docs/WORKFLOW_NAMING.md`:
-- **Format**: `<domain>_<purpose>[_<detail>].json`
-- **Domain Values**: `platform`, `domain_crm`, `domain_infra`, `meta`
-- **Purpose**: Short verb or noun describing the action
-- **Detail**: Optional qualifier for specificity
+Workflows are organized by business domain to:
+- Improve discoverability
+- Enable domain-specific governance
+- Support team ownership models
+- Facilitate maintenance and updates
 
-**Examples:**
+### 3.3 Workflow Naming Conventions
+
+**Format**: `<domain>_<purpose>[_<detail>].json`
+
+**Examples**:
 - `platform_error_central_handler.json`
 - `domain_crm_lead_intake.json`
 - `domain_infra_deploy_terraform.json`
+- `meta_automation_catalog_builder.json`
 
-### Workflow Lifecycle
-1. **Draft**: Workflows in `workflows/draft-workflows/` are under development
-2. **Active**: Workflows in `workflows/active-workflows/` are operational
-3. **Production**: Workflows in `workflows/prod-workflows/` are production-ready
-4. **Archived**: Deprecated workflows moved to archive
+**Rules**:
+- Use lowercase with underscores
+- Domain prefix indicates workflow category
+- Purpose describes the primary function
+- Optional detail provides additional context
 
----
+### 3.4 Workflow Lifecycle
 
-## Agent System
-
-### Agent Responsibilities
-As defined in `AGENTS.md`, agents have two core responsibilities:
-
-1. **Context Capture**: Snapshot files into `.agents/contexts/<timestamp>/<path>`
-2. **Header Management**: Ensure header docstrings are present and up-to-date
-
-### Context Capture Mechanism
-- On file creation or modification, agents save snapshots preserving directory structure
-- Snapshots are timestamped for versioning: `.agents/contexts/YYYY-MM-DD/<relative-path>`
-- All actions are logged to `.agents/logs/agent-actions.log`
-
-### Header/Docstring Management
-Agents ensure all files have appropriate headers:
-
-**JSON Files**: `_metadata` field at top of object
-```json
-{
-  "_metadata": {
-    "purpose": "<description>",
-    "created": "YYYY-MM-DD HH:MM",
-    "agent": "Agent Name"
-  }
-}
-```
-
-**JavaScript Files**: Comment header
-```javascript
-/*
- * Purpose: <description>
- * Created/Updated: YYYY-MM-DD HH:MM
- * Agent: Agent Name
- */
-```
-
-**YAML Files**: Comment header
-```yaml
-# Purpose: <description>
-# Created/Updated: YYYY-MM-DD HH:MM
-# Agent: Agent Name
-```
-
-**Markdown Files**: HTML comment header
-```markdown
-<!--
-Purpose: <description>
-Created/Updated: YYYY-MM-DD HH:MM
-Agent: Agent Name
--->
-```
-
-### Modification Restrictions
-Agents are strictly constrained:
-- ✅ **Allowed**: Adding/updating header docstrings
-- ✅ **Allowed**: Creating snapshots
-- ❌ **Prohibited**: Modifying business logic
-- ❌ **Prohibited**: Changing JSON schema content
-- ❌ **Prohibited**: Altering config settings
-- ❌ **Prohibited**: Modifying documentation body
-
-### Idempotency
-- Re-running agents must not create duplicate snapshots for unchanged files
-- Headers are only updated if missing or outdated
-- System maintains consistency across multiple agent runs
+1. **Draft**: Workflows in development (`workflows/draft-workflows/`)
+2. **Active**: Production-ready workflows in domain directories
+3. **Production**: Deployed and monitored workflows (`workflows/prod-workflows/`)
 
 ---
 
-## Data Management
+## 4. Agent System
 
-### Schema Definitions
-The platform uses JSON schemas for data validation:
+### 4.1 Agent Responsibilities
 
-#### Contact Schema (`shared/schemas/contact.schema.json`)
-Defines the structure for contact data, ensuring consistency across workflows that handle contact information.
+Agents have two core responsibilities:
+1. **Context Capture**: Snapshot files into `.agents/contexts/` for versioning
+2. **Header Management**: Ensure all files have proper docstring headers
 
-#### Incident Schema (`shared/schemas/incident.schema.json`)
-Defines the structure for incident data, standardizing incident reporting and tracking.
+### 4.2 Context Capture Mechanism
 
-### Data Contracts
-As documented in `docs/DATA_CONTRACTS.md`, data contracts define:
-- Expected data structures
-- Required fields and types
+- **Trigger**: On file creation or modification
+- **Storage**: `.agents/contexts/<timestamp>/<relative-path>`
+- **Purpose**: Maintain version history and enable rollback
+- **Idempotency**: No duplicate snapshots for unchanged files
+
+### 4.3 Header/Docstring Management
+
+All files must include headers with:
+- **Purpose**: Short description of file purpose
+- **Created/Updated**: Timestamp (YYYY-MM-DD HH:MM)
+- **Agent**: Name of agent that created/updated the file
+
+**Format by file type**:
+- **JSON**: `_metadata` object at root level
+- **JavaScript**: Multi-line comment block
+- **YAML**: Comment lines
+- **Markdown**: HTML comment block
+
+### 4.4 Modification Restrictions
+
+**Strict Rules**:
+- ✅ **Allowed**: Adding/updating headers only
+- ❌ **Prohibited**: 
+  - Modifying business logic
+  - Changing JSON schema content
+  - Altering config settings
+  - Modifying documentation body
+  - Structural changes
+
+**Enforcement**: Agents self-check and reject prohibited modifications
+
+---
+
+## 5. Data Management
+
+### 5.1 Schema Definitions
+
+**Location**: `shared/schemas/`
+
+JSON Schema files define data structures:
+- **contact.schema.json**: Contact data validation schema
+- **incident.schema.json**: Incident data validation schema
+
+**Usage**: Workflows reference schemas for data validation
+
+### 5.2 Data Contracts
+
+**Documentation**: `docs/DATA_CONTRACTS.md`
+
+Defines:
+- Data structure requirements
+- Field definitions and types
 - Validation rules
-- Transformation requirements
+- Contract versioning
 
-### Validation Patterns
-- **Schema Validation**: Use JSON schemas to validate data structures
-- **Payload Validation**: Use `validate_payload.js` snippet for runtime validation
-- **Data Normalization**: Use `normalize_contact.js` for consistent data formats
+### 5.3 Validation Patterns
+
+- **Schema Validation**: Use JSON schemas for structure validation
+- **Payload Validation**: Use `validate_payload.js` snippet
+- **Data Normalization**: Use `normalize_contact.js` for consistency
 
 ---
 
-## Configuration Management
+## 6. Configuration Management
 
-### Environment-Specific Configs
-Configuration is separated by environment:
-- **Development** (`environments.dev.yaml`): Development environment settings
-- **Production** (`environments.prod.yaml`): Production environment settings
+### 6.1 Environment-Specific Configs
 
-### Configuration Structure
-Configuration files follow YAML format and include:
-- API endpoints and credentials
+**Locations**:
+- `shared/config/environments.dev.yaml`: Development settings
+- `shared/config/environments.prod.yaml`: Production settings
+
+### 6.2 Configuration Structure
+
+YAML files contain:
 - Environment variables
+- API endpoints
+- Credential references
 - Feature flags
-- Resource limits and quotas
+- Resource limits
 
-### Environment Sync Processes
-The `ci/sync_n8n_env.yml` script synchronizes configuration across environments, ensuring:
-- Consistent configuration structure
-- Controlled promotion of changes
-- Environment-specific overrides
+### 6.3 Environment Sync Processes
+
+**Script**: `ci/sync_n8n_env.yml`
+
+Synchronizes:
+- Environment configurations
+- Credential mappings
+- Variable definitions
+- Workflow settings
 
 ---
 
-## Error Handling & Operations
+## 7. Error Handling & Operations
 
-### Error Handling Patterns
-As documented in `docs/ERROR_HANDLING.md`, the platform implements:
+### 7.1 Error Handling Patterns
 
-1. **Central Error Handler**: `workflows/platform/error_central_handler.json`
-   - Captures all platform-wide errors
-   - Routes errors to appropriate handlers
-   - Logs errors for analysis
+**Documentation**: `docs/ERROR_HANDLING.md`
 
-2. **Error Logging**: All errors are logged via `log_event.json` workflow
-3. **Error Notification**: Critical errors trigger `notify_slack.json` workflow
+**Central Handler**: `workflows/platform/error_central_handler.json`
+- Catches and processes all workflow errors
+- Routes errors to appropriate handlers
+- Logs errors for analysis
+- Notifies stakeholders
 
-### Central Error Handler Workflow
-The central error handler provides:
-- Unified error processing
-- Error categorization and routing
-- Error aggregation and reporting
-- Integration with monitoring systems
+### 7.2 Central Error Handler Workflow
 
-### Runbooks and Operational Procedures
-As documented in `docs/RUNBOOKS.md`, runbooks provide:
-- Step-by-step operational procedures
+**Purpose**: Unified error management across all workflows
+
+**Features**:
+- Error categorization
+- Retry logic
+- Escalation paths
+- Notification routing
+
+### 7.3 Runbooks and Operational Procedures
+
+**Documentation**: `docs/RUNBOOKS.md`
+
+Contains:
+- Operational procedures
 - Troubleshooting guides
 - Recovery procedures
 - Maintenance schedules
 
-### Health Check Mechanisms
-The `workflows/meta/workflow_health_check.json` workflow:
-- Monitors workflow execution status
-- Validates workflow configurations
-- Checks dependencies and integrations
-- Reports health metrics
+### 7.4 Health Check Mechanisms
+
+**Workflow**: `workflows/meta/workflow_health_check.json`
+
+**Functionality**:
+- Monitor workflow execution
+- Detect failures and anomalies
+- Generate health reports
+- Alert on degradation
 
 ---
 
-## Development Workflow
+## 8. Development Workflow
 
-### File Modification Rules
-As defined in `.cursorrules`:
-- **Only headers/docstrings** can be added to existing files
-- **No business logic changes** without explicit user request
-- **New files** can be created following naming conventions
-- **Versioning** through new files or explicit versioning
+### 8.1 File Modification Rules
 
-### Header/Docstring Requirements
-All files must have appropriate headers:
-- **Purpose**: Clear description of file purpose
-- **Created/Updated**: Timestamp of creation or last update
-- **Agent**: Name of agent that created/modified the file
+**Core Principle**: Only headers can be modified by agents
 
-### Version Control Practices
-- All changes tracked in version control
-- Commit messages reference PRD changes when applicable
-- Branch strategy follows domain organization
-- Pull requests require review for major changes
+**Process**:
+1. Agent detects file change
+2. Creates snapshot in `.agents/contexts/`
+3. Adds/updates header if needed
+4. Logs action in `.agents/logs/agent-actions.log`
+5. No other modifications allowed
 
-### CI/CD Pipeline
-The CI/CD pipeline includes:
-1. **Export Workflows** (`ci/export_workflows.sh`): Extract workflows from n8n
-2. **Import Workflows** (`ci/import_workflows.sh`): Deploy workflows to n8n
-3. **Environment Sync** (`ci/sync_n8n_env.yml`): Synchronize configurations
-4. **Validation**: Schema validation and workflow health checks
+### 8.2 Header/Docstring Requirements
+
+**Mandatory Fields**:
+- Purpose (required)
+- Created/Updated timestamp (required)
+- Agent name (required)
+
+**Format Compliance**: Must match file type conventions
+
+### 8.3 Version Control Practices
+
+- All changes tracked in git
+- Snapshots stored in `.agents/contexts/`
+- Change log in `.agents/PRD.md`
+- Phase documentation in `.agents/prd_steps/`
+
+### 8.4 CI/CD Pipeline
+
+**Scripts**:
+- `export_workflows.sh`: Export for version control
+- `import_workflows.sh`: Import to n8n instances
+- `sync_n8n_env.yml`: Environment synchronization
 
 ---
 
-## Change Management Process
+## 9. Change Management Process
 
-### PRD as Source of Truth
-- `.cursor/docs/PRD.md` is the authoritative source for all platform requirements
-- All changes to the platform should be reflected in the PRD
-- PRD updates require tracking in `.agents/PRD.md`
+### 9.1 PRD as Source of Truth
 
-### Change Tracking
-All PRD changes must be logged in `.agents/PRD.md` with:
+**Location**: `.cursor/docs/PRD.md`
+
+- Authoritative document for all platform decisions
+- All changes must align with PRD
+- PRD updates require formal process
+
+### 9.2 Change Tracking
+
+**Location**: `.agents/PRD.md`
+
+**Required Fields**:
 - **Timestamp**: YYYY-MM-DD HH:MM:SS
-- **Agent Name**: Name of agent making the change
+- **Agent**: Name of agent making change
 - **Region**: Geographic or logical region (if applicable)
-- **Change Description**: Detailed description of the change
-- **Approval Status**: Pending, Approved, or Rejected
+- **Change Description**: Detailed description of change
+- **Approval Status**: Pending/Approved/Rejected
 
-### Approval Workflow
-- **Major Changes**: Require user confirmation before implementation
-  - Architecture changes
-  - New domain additions
-  - Breaking changes to workflows
-  - Schema modifications
-- **Minor Changes**: Auto-tracked but still logged
-  - Typo corrections
-  - Formatting improvements
-  - Documentation clarifications
+### 9.3 Approval Workflow for Major Changes
 
-### Timestamp and Agent Tracking
-Every change is tracked with:
-- Precise timestamp for audit trail
-- Agent identification for accountability
-- Change categorization for impact analysis
-- Approval workflow for governance
+**Major Changes** (require user confirmation):
+- Architecture changes
+- New domain additions
+- Process modifications
+- Governance rule changes
 
-### Phase Step Documentation
-System state is documented after each phase in `.agents/prd_steps/`:
-- `phase1-directory-structure.md`: Directory creation state
-- `phase2-prd-creation.md`: PRD creation state
-- `phase3-change-management.md`: Change management setup state
-- Additional phases documented as needed
+**Minor Changes** (auto-tracked):
+- Typo corrections
+- Formatting improvements
+- Documentation clarifications
+
+### 9.4 Timestamp and Agent Tracking
+
+All changes logged with:
+- Precise timestamp
+- Agent identification
+- Change classification
+- Approval workflow status
 
 ---
 
-## Future Roadmap
+## 10. Future Roadmap
 
-### Planned Enhancements
-1. **Workflow Versioning**: Implement semantic versioning for workflows
-2. **Testing Framework**: Automated testing for workflow validation
-3. **Monitoring Integration**: Enhanced monitoring and alerting
-4. **Multi-Region Support**: Support for multiple geographic regions
-5. **Workflow Templates**: Reusable workflow templates for common patterns
+### 10.1 Planned Enhancements
 
-### Integration Opportunities
-1. **External Systems**: Integration with external CRM, ticketing, and monitoring systems
-2. **API Gateway**: Centralized API management for workflow triggers
-3. **Event Streaming**: Real-time event processing capabilities
-4. **Analytics**: Workflow performance analytics and optimization
+- **Workflow Templates**: Reusable workflow templates
+- **Advanced Monitoring**: Enhanced health check capabilities
+- **Multi-Environment Support**: Additional environment configurations
+- **API Integration**: REST API for workflow management
+- **Workflow Versioning**: Formal versioning system
 
-### Scalability Considerations
-1. **Horizontal Scaling**: Support for multiple n8n instances
-2. **Workflow Distribution**: Load balancing across instances
-3. **Resource Management**: Efficient resource utilization
-4. **Performance Optimization**: Workflow execution optimization
+### 10.2 Integration Opportunities
 
----
+- **External Systems**: Integration with external APIs
+- **Cloud Services**: AWS, Azure, GCP integrations
+- **Monitoring Tools**: Integration with monitoring platforms
+- **Notification Systems**: Additional notification channels
 
-## Appendix
+### 10.3 Scalability Considerations
 
-### Related Documentation
-- `AGENTS.md`: Agent responsibilities and behavior
-- `docs/WORKFLOW_NAMING.md`: Workflow naming conventions
-- `docs/ERROR_HANDLING.md`: Error handling patterns
-- `docs/DATA_CONTRACTS.md`: Data contract definitions
-- `docs/RUNBOOKS.md`: Operational runbooks
-- `.cursor/rules/folders.mdc`: Directory structure specification
-- `.cursor/rules/001-init_agent.mdc`: Agent behavior rules
-
-### Glossary
-- **Agent**: Automated system that maintains platform integrity
-- **Domain**: Logical grouping of related workflows (CRM, Infrastructure, etc.)
-- **Workflow**: n8n workflow definition in JSON format
-- **Schema**: JSON schema for data validation
-- **Snippet**: Reusable JavaScript code
-- **PRD**: Product Requirements Document
+- **Horizontal Scaling**: Support for multiple n8n instances
+- **Workflow Distribution**: Load balancing across instances
+- **Resource Optimization**: Efficient resource utilization
+- **Performance Monitoring**: Performance metrics and optimization
 
 ---
 
-**Document Status**: Active  
-**Next Review**: As needed for major changes  
-**Maintained By**: Platform Team
+## Appendix A: File Structure Reference
 
+See `.cursor/rules/folders.mdc` for complete directory structure.
+
+## Appendix B: Agent Rules Reference
+
+See `AGENTS.md` and `.cursor/rules/001-init_agent.mdc` for agent behavior rules.
+
+## Appendix C: Documentation Index
+
+- **Workflow Naming**: `docs/WORKFLOW_NAMING.md`
+- **Error Handling**: `docs/ERROR_HANDLING.md`
+- **Data Contracts**: `docs/DATA_CONTRACTS.md`
+- **Runbooks**: `docs/RUNBOOKS.md`
+- **Agent Responsibilities**: `AGENTS.md`
+
+---
+
+**Document Control**:
+- **Source of Truth**: `.cursor/docs/PRD.md`
+- **Change Log**: `.agents/PRD.md`
+- **Version History**: `.agents/prd_steps/`
