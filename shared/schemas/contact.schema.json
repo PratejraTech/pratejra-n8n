@@ -1,8 +1,102 @@
 {
-  "_metadata": {
-    "purpose": "JSON schema definition for contact data structure validation",
-    "created": "2025-11-19 19:49",
-    "agent": "Init Agent"
-  }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/contact.schema.json",
+  "title": "Contact Data Schema v1",
+  "description": "Schema for contact/lead data used in CRM workflows",
+  "type": "object",
+  "required": ["email"],
+  "properties": {
+    "id": {
+      "type": ["string", "null"],
+      "description": "Unique contact identifier (UUID format recommended)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email address",
+      "format": "email",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "first_name": {
+      "type": ["string", "null"],
+      "description": "Contact first name",
+      "maxLength": 100
+    },
+    "last_name": {
+      "type": ["string", "null"],
+      "description": "Contact last name",
+      "maxLength": 100
+    },
+    "company": {
+      "type": ["string", "null"],
+      "description": "Company name",
+      "maxLength": 200
+    },
+    "phone": {
+      "type": ["string", "null"],
+      "description": "Phone number (E.164 format recommended)",
+      "pattern": "^\\+?[1-9]\\d{1,14}$"
+    },
+    "title": {
+      "type": ["string", "null"],
+      "description": "Job title",
+      "maxLength": 100
+    },
+    "source": {
+      "type": ["string", "null"],
+      "description": "Lead source (e.g., 'website', 'referral', 'event')",
+      "maxLength": 50
+    },
+    "status": {
+      "type": ["string", "null"],
+      "description": "Contact status",
+      "enum": ["new", "contacted", "qualified", "converted", "lost", null]
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags for categorizing contacts",
+      "items": {
+        "type": "string",
+        "maxLength": 50
+      }
+    },
+    "custom_fields": {
+      "type": "object",
+      "description": "Custom fields specific to the organization",
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when contact was created",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when contact was last updated",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the contact",
+      "properties": {
+        "risk_score": {
+          "type": ["number", "null"],
+          "description": "Calculated risk score (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "enrichment_status": {
+          "type": ["string", "null"],
+          "enum": ["pending", "in_progress", "completed", "failed", null]
+        },
+        "last_enriched_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
 }
-

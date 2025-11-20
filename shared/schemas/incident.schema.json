@@ -1,8 +1,146 @@
 {
-  "_metadata": {
-    "purpose": "JSON schema definition for incident data structure validation",
-    "created": "2025-11-19 19:49",
-    "agent": "Init Agent"
-  }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/incident.schema.json",
+  "title": "Incident Schema v1",
+  "description": "Schema for incident/error tracking used in error handling workflows",
+  "type": "object",
+  "required": ["id", "source", "severity", "status", "event_type", "error", "context", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique incident identifier (UUID format recommended)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source system that generated the incident",
+      "enum": ["n8n", "backend", "frontend", "infra", "external"]
+    },
+    "severity": {
+      "type": "string",
+      "description": "Incident severity level",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Current incident status",
+      "enum": ["open", "investigating", "mitigated", "resolved", "closed"]
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Type of event that triggered the incident",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "workflow": {
+      "type": ["object", "null"],
+      "description": "Workflow context where incident occurred",
+      "properties": {
+        "id": {
+          "type": ["string", "null"],
+          "description": "Workflow ID"
+        },
+        "name": {
+          "type": ["string", "null"],
+          "description": "Workflow name"
+        },
+        "run_id": {
+          "type": ["string", "null"],
+          "description": "Workflow execution run ID"
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "description": "Error details",
+      "required": ["message"],
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Error message",
+          "minLength": 1
+        },
+        "code": {
+          "type": ["string", "null"],
+          "description": "Error code (if applicable)"
+        },
+        "stack": {
+          "type": ["string", "null"],
+          "description": "Stack trace (if available)"
+        },
+        "type": {
+          "type": ["string", "null"],
+          "description": "Error type (e.g., 'ValidationError', 'NetworkError')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "description": "Contextual information about the incident",
+      "required": ["env"],
+      "properties": {
+        "service": {
+          "type": ["string", "null"],
+          "description": "Service name where incident occurred"
+        },
+        "env": {
+          "type": "string",
+          "description": "Environment where incident occurred",
+          "enum": ["dev", "staging", "prod"]
+        },
+        "correlation_id": {
+          "type": ["string", "null"],
+          "description": "Correlation ID for tracing"
+        },
+        "payload": {
+          "type": ["object", "null"],
+          "description": "Payload data at time of incident",
+          "additionalProperties": true
+        },
+        "user_id": {
+          "type": ["string", "null"],
+          "description": "User ID associated with the incident (if applicable)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when incident was created",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when incident was last updated",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when incident was resolved",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the incident",
+      "properties": {
+        "retry_count": {
+          "type": ["number", "null"],
+          "description": "Number of retry attempts",
+          "minimum": 0
+        },
+        "notified": {
+          "type": ["boolean", "null"],
+          "description": "Whether notifications were sent"
+        },
+        "runbook_url": {
+          "type": ["string", "null"],
+          "description": "URL to relevant runbook"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
 }
-

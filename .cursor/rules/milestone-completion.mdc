@@ -1,0 +1,255 @@
+---
+description: "Milestone completion process requiring state update, commit, and process-tasks.md update"
+globs:
+  - ".cursor/rules/state.mdc"
+  - ".agents/process-tasks.md"
+alwaysApply: false
+version: "1.0.0"
+---
+
+# Milestone Completion Rule
+
+## Purpose
+Defines the required process for completing milestones within a phase. This ensures consistent state tracking, proper documentation, and traceable progress updates.
+
+## Milestone vs Phase
+
+### Milestone
+- **Definition:** Sub-goal or checkpoint within a phase
+- **Frequency:** Multiple milestones per phase
+- **Completion:** Updates state.mdc, commits, updates process-tasks.md
+- **Authority:** Any agent working on the milestone
+
+### Phase
+- **Definition:** Major project stage with formal exit criteria
+- **Frequency:** Sequential phases (phase_1, phase_2, etc.)
+- **Completion:** Requires QA_AGENT validation, ARCHITECT_AGENT state update, formal exit criteria
+- **Authority:** ARCHITECT_AGENT (with QA_AGENT approval)
+
+## Milestone Completion Process
+
+### Required Actions (All Must Be Completed)
+
+#### 1. Update state.mdc
+**Location:** `.cursor/rules/state.mdc`  
+**Action:** Update milestone entry within the current phase
+
+**Required Updates:**
+```yaml
+milestones:
+  - id: "{milestone_id}"
+    title: "{milestone_title}"
+    status: "Completed"  # Change from "In Progress" or "Not Started"
+    completed_date: "YYYY-MM-DD"  # Set to current date
+```
+
+**Notes:**
+- Only update the specific milestone being completed
+- Do not change phase status (that's ARCHITECT_AGENT responsibility)
+- Maintain existing milestone structure
+
+#### 2. Commit Changes
+**Required:** All milestone completion work must be committed
+
+**Commit Message Format:**
+```
+Complete milestone {milestone_id} – {milestone_title}
+```
+
+**Examples:**
+- `Complete milestone p1_m1 – Repo scaffolding & folder structure`
+- `Complete milestone p1_m2 – Shared schemas & JS snippets implemented`
+
+**Files to Include:**
+- `.cursor/rules/state.mdc` (milestone status update)
+- Any implementation files related to the milestone
+- Documentation updates if applicable
+
+**Commit Requirements:**
+- Descriptive commit message following format
+- Include all related changes in single commit
+- Reference milestone ID in commit message
+
+#### 3. Update process-tasks.md
+**Location:** `.agents/process-tasks.md` or phase-specific report  
+**Action:** Document milestone completion
+
+**Required Updates:**
+1. **State Summary Table:**
+   - Update relevant module status if milestone affects it
+   - Document any blockers resolved
+   - Note milestone completion
+
+2. **Phase Checklist:**
+   - Mark milestone-related tasks as complete
+   - Update progress indicators
+
+3. **Reflection Section (if applicable):**
+   - Note lessons learned from milestone
+   - Document any process improvements
+   - Record blockers encountered and resolved
+
+**Update Format:**
+```markdown
+## B. State Summary
+| Module       | Phase        | Status        | Blockers                          |
+|--------------|--------------|---------------|----------------------------------|
+| Backend      | {Phase Name} | InProgress    | Milestone {milestone_id} completed |
+```
+
+## Milestone Completion Checklist
+
+Before marking a milestone complete, verify:
+
+- [ ] All milestone tasks are finished
+- [ ] Tests pass for milestone deliverables
+- [ ] Documentation updated if required
+- [ ] state.mdc updated with milestone status
+- [ ] state.mdc updated with completed_date
+- [ ] Changes committed with proper message format
+- [ ] process-tasks.md updated with milestone completion
+- [ ] State Summary reflects milestone progress
+
+## State File Update Details
+
+### Finding the Milestone
+Locate milestone in state.mdc under the current phase:
+```yaml
+phases:
+  - id: "phase_1"
+    name: "Foundation & Environment"
+    status: "In Progress"
+    milestones:
+      - id: "p1_m1"  # <-- Find the milestone to update
+        title: "Repo scaffolding & folder structure"
+        status: "In Progress"  # <-- Change to "Completed"
+        completed_date: null   # <-- Set to current date
+```
+
+### Update Process
+1. Open `.cursor/rules/state.mdc`
+2. Locate phase containing the milestone
+3. Find milestone by `id` field
+4. Update `status` to `"Completed"`
+5. Set `completed_date` to current date (YYYY-MM-DD format)
+6. Save file
+
+### Validation
+- Ensure milestone ID matches exactly
+- Verify date format is YYYY-MM-DD
+- Confirm status is exactly "Completed" (case-sensitive)
+- Do not modify other milestones or phase status
+
+## Commit Message Requirements
+
+### Format
+```
+Complete milestone {milestone_id} – {milestone_title}
+```
+
+### Components
+- **Prefix:** "Complete milestone"
+- **Milestone ID:** Exact ID from state.mdc (e.g., `p1_m1`)
+- **Separator:** "–" (en dash)
+- **Title:** Milestone title from state.mdc
+
+### Examples
+✅ Good:
+- `Complete milestone p1_m1 – Repo scaffolding & folder structure`
+- `Complete milestone p1_m2 – Shared schemas & JS snippets implemented`
+- `Complete milestone p2_m1 – CRM workflows implemented`
+
+❌ Bad:
+- `Milestone done` (missing ID and title)
+- `Completed p1_m1` (missing title)
+- `Milestone p1_m1 complete` (wrong format)
+
+## Process-Tasks.md Update Details
+
+### When to Update
+Update process-tasks.md immediately after committing milestone completion.
+
+### What to Update
+
+1. **State Summary Table:**
+   - Update status of affected module (Backend, Integration, or QA)
+   - Note milestone completion in blockers column or remove resolved blockers
+   - Reflect current progress accurately
+
+2. **Phase Checklist:**
+   - Mark milestone-related checklist items as complete
+   - Update progress indicators
+
+3. **Reflection (Optional but Recommended):**
+   - Document what was accomplished
+   - Note any challenges overcome
+   - Record process improvements for future milestones
+
+### Update Location
+- If using phase-specific report: Update `.agents/reports/{phase_id}_{YYYY-MM-DD}.md`
+- If using template: Update `.agents/process-tasks.md` (template file)
+
+## Integration with Phase Workflow
+
+### Milestone Completion Within Phase
+- Milestones are completed during phase execution
+- Multiple milestones can be completed in sequence
+- Milestone completion does not affect phase status
+- Phase remains "In Progress" until all exit criteria met
+
+### Phase Completion
+- Phase completion is separate from milestone completion
+- Requires QA_AGENT validation of exit criteria
+- ARCHITECT_AGENT updates phase status to "Completed"
+- See `workflow-governance.mdc` for phase completion process
+
+## Compliance Requirements
+
+### Mandatory Steps
+All three steps must be completed for milestone completion:
+1. ✅ Update state.mdc
+2. ✅ Commit changes
+3. ✅ Update process-tasks.md
+
+### Validation
+- CI/CD may validate commit message format
+- State file updates may be checked for proper format
+- Process-tasks.md updates should reflect milestone completion
+
+### Non-Compliance
+- Missing any step is considered incomplete milestone
+- Incomplete milestones block phase completion
+- QA_AGENT will flag incomplete milestones during phase review
+
+## Examples
+
+### Example: Completing Milestone p1_m1
+
+**1. Update state.mdc:**
+```yaml
+milestones:
+  - id: "p1_m1"
+    title: "Repo scaffolding & folder structure"
+    status: "Completed"
+    completed_date: "2025-11-20"
+```
+
+**2. Commit:**
+```bash
+git add .cursor/rules/state.mdc
+git commit -m "Complete milestone p1_m1 – Repo scaffolding & folder structure"
+```
+
+**3. Update process-tasks.md:**
+```markdown
+## B. State Summary
+| Module       | Phase        | Status        | Blockers                          |
+|--------------|--------------|---------------|----------------------------------|
+| Backend      | Foundation & Environment | InProgress | Milestone p1_m1 completed |
+```
+
+## References
+- See `workflow-governance.mdc` for phase workflow details
+- See `architect-agent.mdc` for phase management authority
+- See `.cursor/rules/state.mdc` for state file structure
+- See `.agents/process-tasks.md` for task processing template

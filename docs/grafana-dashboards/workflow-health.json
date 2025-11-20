@@ -1,0 +1,79 @@
+{
+  "dashboard": {
+    "title": "Automation Hub - Workflow Health",
+    "tags": ["automation-hub", "workflows", "health"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Workflow Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_success_total[5m])) / (sum(rate(workflow_success_total[5m])) + sum(rate(workflow_failure_total[5m]))) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Workflow Executions (Last Hour)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_success_total[1m]))",
+            "legendFormat": "Success"
+          },
+          {
+            "expr": "sum(rate(workflow_failure_total[1m]))",
+            "legendFormat": "Failures"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Workflow Failures by Type",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (workflow_name) (workflow_failure_total)",
+            "legendFormat": "{{workflow_name}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Top Workflows by Execution Count",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (workflow_name) (workflow_success_total + workflow_failure_total))",
+            "legendFormat": "{{workflow_name}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ]
+  }
+}
+

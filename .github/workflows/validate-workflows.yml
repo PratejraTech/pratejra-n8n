@@ -1,0 +1,289 @@
+# Purpose: Validate n8n workflow files for structure, schema compliance, and rule adherence
+# Created/Updated: 2025-11-20
+# Agent: INTEGRATION_AGENT
+#
+# This workflow validates:
+# - JSON syntax and structure
+# - Schema validation requirements
+# - Directory structure compliance
+# - Rule compliance (from .cursor/rules/)
+
+name: Validate Workflows
+
+on:
+  pull_request:
+    paths:
+      - 'workflows/**/*.json'
+      - 'shared/schemas/**/*.json'
+      - '.cursor/rules/**/*.mdc'
+  push:
+    branches:
+      - main
+    paths:
+      - 'workflows/**/*.json'
+      - 'shared/schemas/**/*.json'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-json:
+    name: Validate JSON Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON syntax..."
+          find workflows -name "*.json" -type f | while read file; do
+            echo "Checking $file..."
+            python3 -m json.tool "$file" > /dev/null || {
+              echo "❌ Invalid JSON: $file"
+              exit 1
+            }
+          done
+          echo "✅ All JSON files are valid"
+
+  validate-schemas:
+    name: Validate JSON Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema
+
+      - name: Validate schema files
+        run: |
+          echo "Validating JSON Schema files..."
+          python3 << 'EOF'
+          import json
+          import jsonschema
+          from pathlib import Path
+          from jsonschema import validate, Draft7Validator
+          
+          schemas_dir = Path("shared/schemas")
+          errors = []
+          
+          for schema_file in schemas_dir.glob("*.json"):
+              try:
+                  with open(schema_file, 'r') as f:
+                      schema = json.load(f)
+                  
+                  # Validate schema itself is valid JSON Schema
+                  Draft7Validator.check_schema(schema)
+                  print(f"✅ Valid schema: {schema_file}")
+              except jsonschema.SchemaError as e:
+                  errors.append(f"❌ Invalid schema {schema_file}: {e}")
+              except Exception as e:
+                  errors.append(f"❌ Error validating {schema_file}: {e}")
+          
+          if errors:
+              for error in errors:
+                  print(error)
+              exit(1)
+          else:
+              print("✅ All schema files are valid")
+          EOF
+
+  validate-structure:
+    name: Validate Directory Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate workflow structure
+        run: |
+          echo "Validating workflow directory structure..."
+          
+          # Check that workflows are in approved directories
+          APPROVED_DIRS=(
+            "workflows/domains/shared"
+            "workflows/domains/crm"
+            "workflows/domains/infra"
+            "workflows/domains/meta"
+            "workflows/platform"
+            "workflows/domain_crm"
+            "workflows/domain_infra"
+          )
+          
+          # Find all workflow JSON files
+          WORKFLOW_FILES=$(find workflows -name "*.json" -type f)
+          
+          for file in $WORKFLOW_FILES; do
+            APPROVED=false
+            for dir in "${APPROVED_DIRS[@]}"; do
+              if [[ "$file" == "$dir"* ]]; then
+                APPROVED=true
+                break
+              fi
+            done
+            
+            if [ "$APPROVED" = false ]; then
+              echo "❌ Workflow in unapproved location: $file"
+              echo "   Workflows must be in approved domain directories"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All workflows are in approved directories"
+
+  validate-rules:
+    name: Validate Rule Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Validate .mdc rule files
+        run: |
+          echo "Validating .cursor/rules/ files..."
+          python3 << 'EOF'
+          import yaml
+          from pathlib import Path
+          import re
+          
+          rules_dir = Path(".cursor/rules")
+          errors = []
+          
+          for rule_file in rules_dir.glob("*.mdc"):
+              try:
+                  with open(rule_file, 'r') as f:
+                      content = f.read()
+                  
+                  # Check for YAML front matter
+                  if not content.startswith('---'):
+                      errors.append(f"❌ {rule_file}: Missing YAML front matter")
+                      continue
+                  
+                  # Extract front matter
+                  parts = content.split('---', 2)
+                  if len(parts) < 3:
+                      errors.append(f"❌ {rule_file}: Invalid front matter format")
+                      continue
+                  
+                  front_matter = parts[1]
+                  metadata = yaml.safe_load(front_matter)
+                  
+                  # Validate required fields
+                  required_fields = ['description']
+                  for field in required_fields:
+                      if field not in metadata:
+                          errors.append(f"❌ {rule_file}: Missing required field '{field}' in front matter")
+              
+              except Exception as e:
+                  errors.append(f"❌ {rule_file}: Error - {e}")
+          
+          if errors:
+              for error in errors:
+                  print(error)
+              exit(1)
+          else:
+              print("✅ All rule files are valid")
+          EOF
+
+  validate-state:
+    name: Validate State File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Validate state.mdc
+        run: |
+          echo "Validating state.mdc..."
+          python3 << 'EOF'
+          import yaml
+          from pathlib import Path
+          
+          state_file = Path(".cursor/rules/state.mdc")
+          
+          try:
+              with open(state_file, 'r') as f:
+                  content = f.read()
+              
+              # Handle front matter
+              if content.startswith('---'):
+                  parts = content.split('---', 2)
+                  if len(parts) >= 3:
+                      yaml_content = parts[2]
+                  else:
+                      yaml_content = content
+              else:
+                  yaml_content = content
+              
+              state = yaml.safe_load(yaml_content)
+              
+              # Validate structure
+              if 'phases' not in state:
+                  print("❌ state.mdc: Missing 'phases' key")
+                  exit(1)
+              
+              if 'history' not in state:
+                  print("❌ state.mdc: Missing 'history' key")
+                  exit(1)
+              
+              # Validate phase structure
+              for phase in state.get('phases', []):
+                  required_fields = ['id', 'name', 'status']
+                  for field in required_fields:
+                      if field not in phase:
+                          print(f"❌ state.mdc: Phase missing required field '{field}'")
+                          exit(1)
+              
+              print("✅ state.mdc is valid")
+          
+          except Exception as e:
+              print(f"❌ state.mdc validation error: {e}")
+              exit(1)
+          EOF
+
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-json, validate-schemas, validate-structure, validate-rules, validate-state]
+    if: always()
+    steps:
+      - name: Check validation results
+        run: |
+          if [ "${{ needs.validate-json.result }}" != "success" ] || \
+             [ "${{ needs.validate-schemas.result }}" != "success" ] || \
+             [ "${{ needs.validate-structure.result }}" != "success" ] || \
+             [ "${{ needs.validate-rules.result }}" != "success" ] || \
+             [ "${{ needs.validate-state.result }}" != "success" ]; then
+            echo "❌ Validation failed. Please check the logs above."
+            exit 1
+          else
+            echo "✅ All validations passed"
+          fi
+

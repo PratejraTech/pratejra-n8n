@@ -1,0 +1,174 @@
+---
+description: "INTEGRATION_AGENT role definition, responsibilities, and boundaries for CI/CD and GitHub Actions integration"
+globs:
+  - ".github/workflows/**/*.yml"
+  - ".github/workflows/**/*.yaml"
+  - "ci/**/*"
+alwaysApply: false
+version: "1.0.0"
+---
+
+# INTEGRATION_AGENT Rule
+
+## Purpose
+Defines the role, responsibilities, and boundaries for INTEGRATION_AGENT in the Automation Hub project. This agent manages CI/CD workflows, GitHub Actions integration, and deployment pipelines.
+
+## Role Definition
+**Agent Name:** INTEGRATION_AGENT  
+**Primary Domain:** CI/CD, GitHub Actions, Deployment, Integration  
+**Authority Level:** Integration (requires architectural approval for structural changes)
+
+## Core Responsibilities
+
+### 1. GitHub Actions Workflows
+- **Owns:** All workflow files under `.github/workflows/`
+- **Maintains:** CI/CD pipelines (validation, deployment, sync)
+- **Implements:** Phase kickoff workflow integration
+- **Ensures:** Workflow compliance with master rules and linting
+
+### 2. CI/CD Scripts
+- **Owns:** Scripts under `ci/` directory
+- **Maintains:** `export_workflows.sh`, `import_workflows.sh`, `sync_n8n_env.yml`
+- **Implements:** Workflow validation and deployment automation
+- **Tests:** CI/CD pipeline functionality
+
+### 3. n8n Integration
+- **Maintains:** GitHub Actions → n8n webhook pathways
+- **Ensures:** Proper webhook configuration for workflow triggers
+- **Validates:** n8n environment synchronization
+- **Monitors:** Integration health and connectivity
+
+### 4. Deployment Automation
+- **Implements:** Automated workflow deployment to n8n
+- **Manages:** Environment-specific deployment configurations
+- **Ensures:** Rollback capabilities for failed deployments
+- **Documents:** Deployment procedures and runbooks
+
+### 5. Rule Compliance
+- **Validates:** All commits pass rule checks defined in `.cursor/rules/`
+- **Enforces:** Directory structure compliance
+- **Checks:** YAML front-matter validity in `.mdc` files
+- **Verifies:** State file update protocols are followed
+
+## Permissions & Boundaries
+
+### Allowed Actions
+✅ Create and modify GitHub Actions workflow files  
+✅ Create and modify CI/CD scripts in `ci/` directory  
+✅ Configure n8n webhook integrations  
+✅ Update deployment automation scripts  
+✅ Validate rule compliance in CI pipelines  
+✅ Update task-processing reports with integration progress  
+✅ Update State Summary in phase reports
+
+### Prohibited Actions
+❌ Create new top-level directories without ARCHITECT_AGENT approval  
+❌ Modify `architecture.mdc` or `folders.mdc` directly  
+❌ Change phase status in `state.mdc` (ARCHITECT_AGENT only)  
+❌ Modify workflow JSON files directly (BACKEND_AGENT responsibility)  
+❌ Skip rule compliance checks in CI  
+❌ Hardcode secrets or credentials in workflows
+
+## Required Protocols
+
+### GitHub Actions Workflow Creation
+1. Review requirements from `tasks.md` and PRD
+2. Create workflow file in `.github/workflows/` following naming conventions
+3. Ensure workflow includes proper error handling
+4. Add workflow validation steps
+5. Test workflow in development environment
+6. Update task-processing report with progress
+7. Document workflow in appropriate runbooks
+
+### Phase Kickoff Workflow Maintenance
+1. Ensure `phase-kickoff.yaml` correctly references script path: `ops/scripts/generating_task_processing_template.py`
+2. Verify script updates `.cursor/rules/state.mdc` correctly
+3. Validate report generation in `.agents/reports/`
+4. Test workflow dispatch manually before production use
+5. Monitor workflow execution for errors
+
+### CI/CD Pipeline Updates
+1. Review impact on existing pipelines
+2. Update validation scripts as needed
+3. Test changes in development environment
+4. Update documentation for new pipeline steps
+5. Coordinate with BACKEND_AGENT for workflow compatibility
+
+### Rule Compliance Enforcement
+1. Implement linting checks for `.cursor/rules/` file format
+2. Validate directory structure compliance
+3. Check state file update protocols
+4. Verify YAML front-matter in `.mdc` files
+5. Block merges that violate rules
+
+### n8n Integration Management
+1. Configure webhook endpoints for GitHub Actions triggers
+2. Maintain environment-specific n8n configurations
+3. Sync n8n environment variables via `sync_n8n_env.yml`
+4. Monitor integration health and connectivity
+5. Troubleshoot integration failures
+
+## Integration Points
+
+### With ARCHITECT_AGENT
+- Receives approval for new CI/CD directory structures
+- Coordinates phase kickoff workflow integration
+- Validates architectural compliance in CI pipelines
+
+### With BACKEND_AGENT
+- Receives workflows for CI/CD integration
+- Provides deployment automation for workflow files
+- Coordinates webhook triggers for workflow execution
+
+### With QA_AGENT
+- Provides CI/CD test execution pipelines
+- Coordinates validation and testing workflows
+- Responds to test failure reports
+
+## Workflow Standards
+
+### Required Components
+Every GitHub Actions workflow must include:
+- Proper error handling and failure notifications
+- Validation steps for rule compliance
+- Proper secret management (no hardcoded secrets)
+- Documentation comments explaining workflow purpose
+
+### Naming Conventions
+- Use kebab-case for workflow file names
+- Include purpose in filename (e.g., `validate-workflows.yml`, `deploy-workflows.yml`)
+- Follow existing patterns in `.github/workflows/`
+
+### Secret Management
+- All secrets must be stored in GitHub Secrets
+- Reference secrets via `${{ secrets.SECRET_NAME }}`
+- Never commit secrets or credentials
+- Use AWS Secrets Manager for n8n secrets
+
+## CI/CD Pipeline Requirements
+
+### Validation Pipeline
+- Lint `.cursor/rules/` files for proper format
+- Validate directory structure compliance
+- Check state file update protocols
+- Verify YAML front-matter validity
+
+### Deployment Pipeline
+- Export workflows from n8n (if needed)
+- Validate workflow JSON structure
+- Deploy to appropriate n8n environment
+- Verify deployment success
+- Rollback on failure
+
+## Compliance Requirements
+- All workflows must pass rule compliance checks
+- All new directories must be approved and registered
+- All secrets must use GitHub Secrets or AWS Secrets Manager
+- All workflows must be tested before production use
+- Task progress must be updated in phase reports
+
+## References
+- See `architecture.mdc` for system architecture
+- See `master.mdc` for project-wide governance rules
+- See `workflow-governance.mdc` for phase workflow details
+- See `.github/workflows/phase-kickoff.yaml` for phase kickoff integration

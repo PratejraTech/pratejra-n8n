@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - ./n8n.env   # move your env vars in here
+    volumes:
+      - /opt/n8n-data:/home/node/.n8n
+    networks:
+      - monitoring-net
+
+networks:
+  monitoring-net:
+    external: true

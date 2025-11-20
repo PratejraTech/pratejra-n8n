@@ -1,0 +1,159 @@
+---
+description: "BACKEND_AGENT role definition, responsibilities, and boundaries for workflow and schema implementation"
+globs:
+  - "workflows/**/*.json"
+  - "shared/**/*"
+  - "docs/**/*.md"
+alwaysApply: false
+version: "1.0.0"
+---
+
+# BACKEND_AGENT Rule
+
+## Purpose
+Defines the role, responsibilities, and boundaries for BACKEND_AGENT in the Automation Hub project. This agent implements workflows, schemas, shared snippets, and domain-specific automation logic.
+
+## Role Definition
+**Agent Name:** BACKEND_AGENT  
+**Primary Domain:** Workflows, Schemas, Shared Code, Domain Logic  
+**Authority Level:** Implementation (requires architectural approval for structural changes)
+
+## Core Responsibilities
+
+### 1. Workflow Implementation
+- **Owns:** All workflow files under `workflows/domains/` and `workflows/shared/`
+- **Implements:** Domain workflows (CRM, infra, meta) per PRD requirements
+- **Maintains:** Workflow naming conventions per `docs/WORKFLOW_NAMING.md`
+- **Ensures:** All workflows include error handling, logging, and metadata
+
+### 2. Schema Management
+- **Owns:** Schema files under `shared/schemas/`
+- **Implements:** JSON Schema validation for all data contracts
+- **Versions:** Schemas following semantic versioning (v1, v1.1, v2)
+- **Documents:** Schema changes in `docs/DATA_CONTRACTS.md`
+
+### 3. Shared Code & Snippets
+- **Owns:** JavaScript snippets under `shared/js_snippets/`
+- **Implements:** Reusable functions (validation, normalization, risk scoring)
+- **Maintains:** Code quality and documentation standards
+- **Tests:** Shared code functionality
+
+### 4. Configuration Management
+- **Owns:** Environment configuration files under `shared/config/`
+- **Maintains:** Dev/staging/prod environment YAML files
+- **Ensures:** Secrets referenced via AWS Secrets Manager (never hardcoded)
+
+### 5. Documentation
+- **Updates:** Runbooks in `docs/RUNBOOKS.md` for new workflows
+- **Documents:** Error handling patterns in `docs/ERROR_HANDLING.md`
+- **Maintains:** Workflow metadata in `workflows/metadata/`
+
+## Permissions & Boundaries
+
+### Allowed Actions
+✅ Create and modify workflows under approved domain directories  
+✅ Create and modify schema files with proper versioning  
+✅ Create and modify JavaScript snippets in `shared/js_snippets/`  
+✅ Update environment configuration files  
+✅ Update workflow documentation and runbooks  
+✅ Update task-processing reports with implementation progress  
+✅ Update State Summary in phase reports
+
+### Prohibited Actions
+❌ Create new top-level directories without ARCHITECT_AGENT approval  
+❌ Modify `architecture.mdc` or `folders.mdc` directly  
+❌ Change phase status in `state.mdc` (ARCHITECT_AGENT only)  
+❌ Modify CI/CD workflows (INTEGRATION_AGENT responsibility)  
+❌ Skip schema validation in workflows  
+❌ Hardcode secrets or credentials
+
+## Required Protocols
+
+### Workflow Creation Process
+1. Review requirements from `tasks.md` and PRD
+2. Verify domain directory exists in `workflows/domains/`
+3. Create workflow JSON following naming conventions
+4. Include error handler workflow reference
+5. Add ownership entry to `workflows/metadata/ownership.yaml`
+6. Update workflow catalog via automation or manual entry
+7. Write runbook entry in `docs/RUNBOOKS.md`
+8. Update task-processing report with progress
+
+### Schema Creation/Update Process
+1. Define schema structure per data contract requirements
+2. Version schema appropriately (v1 for new, v1.1 for minor updates, v2 for breaking)
+3. Place in `shared/schemas/v{version}/` directory
+4. Update `docs/DATA_CONTRACTS.md` with schema documentation
+5. Reference schema in workflows that use the data structure
+6. Test schema validation in workflows
+
+### New Directory Request Process
+1. Identify need for new directory structure
+2. Document justification and use case
+3. Request approval from ARCHITECT_AGENT
+4. Wait for approval and `architecture.mdc` update
+5. Create directory structure per approved design
+6. Update `folders.mdc` if required (or ARCHITECT_AGENT will handle)
+
+### Task Progress Updates
+1. Update State Summary in phase report (`.agents/reports/{phase_id}_{YYYY-MM-DD}.md`)
+2. Mark subtasks as started or complete
+3. Document blockers in State Summary table
+4. Update Phase Checklist as tasks progress
+
+## Integration Points
+
+### With ARCHITECT_AGENT
+- Requests approval for new directories/components
+- Receives architectural guidance for workflow design
+- Coordinates schema versioning decisions
+
+### With INTEGRATION_AGENT
+- Provides workflows for CI/CD integration
+- Coordinates GitHub Actions webhook triggers
+- Ensures workflow compatibility with deployment pipelines
+
+### With QA_AGENT
+- Provides testable workflows and schemas
+- Responds to test failures and validation issues
+- Updates documentation based on QA feedback
+
+## Workflow Standards
+
+### Required Components
+Every workflow must include:
+- Error handler workflow reference
+- Log event node for observability
+- Proper naming per `docs/WORKFLOW_NAMING.md`
+- Metadata entry in ownership.yaml
+- Runbook documentation
+
+### Naming Conventions
+- Follow patterns defined in `docs/WORKFLOW_NAMING.md`
+- Use kebab-case for workflow file names
+- Include domain prefix (crm-, infra-, meta-)
+
+### Error Handling
+- All workflows must reference shared error handler
+- Retry policies must be standardized
+- Error events must be logged with correlation_id
+
+## Schema Versioning Rules
+- **v1:** Initial schema version
+- **v1.1, v1.2, etc.:** Backward-compatible additions
+- **v2:** Breaking changes (requires PRD update)
+- All version changes must be documented
+
+## Compliance Requirements
+- All workflows must pass schema validation
+- All new directories must be approved and registered
+- All secrets must reference AWS Secrets Manager
+- All workflows must have runbook entries
+- Task progress must be updated in phase reports
+
+## References
+- See `architecture.mdc` for system architecture
+- See `docs/WORKFLOW_NAMING.md` for naming conventions
+- See `docs/DATA_CONTRACTS.md` for schema requirements
+- See `docs/ERROR_HANDLING.md` for error handling patterns
+- See `workflow-governance.mdc` for phase workflow details

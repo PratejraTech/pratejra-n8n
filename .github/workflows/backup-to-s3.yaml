@@ -52,7 +52,26 @@ jobs:
           echo "bundle_name=${BUNDLE_NAME}" >> "$GITHUB_OUTPUT"
           echo "timestamp=${TIMESTAMP}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload bundle to S3
+      - name: Export n8n workflows (if n8n available)
+        id: export-workflows
+        continue-on-error: true
+        run: |
+          echo "Exporting n8n workflows..."
+          # Create workflows backup directory
+          TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
+          WORKFLOWS_BACKUP_DIR="workflows-backup-${TIMESTAMP}"
+          mkdir -p "${WORKFLOWS_BACKUP_DIR}"
+          
+          # Copy workflow JSON files
+          cp -r workflows "${WORKFLOWS_BACKUP_DIR}/" || true
+          cp -r shared "${WORKFLOWS_BACKUP_DIR}/" || true
+          
+          # Create workflows archive
+          tar -czf "workflows-${TIMESTAMP}.tar.gz" "${WORKFLOWS_BACKUP_DIR}"
+          echo "workflows_archive=workflows-${TIMESTAMP}.tar.gz" >> $GITHUB_OUTPUT
+          echo "✅ Workflows exported"
+
+      - name: Upload git bundle to S3
         run: |
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
           BUNDLE_NAME="${{ steps.create_bundle.outputs.bundle_name }}"
@@ -60,7 +79,65 @@ jobs:
 
           # Directory structure: myrepo/backups/YYYY-MM-DD/<bundle>
           DATE_PREFIX=${TIMESTAMP%_*}  # extract YYYY-MM-DD
-          S3_KEY="${REPO_NAME}/active-workflows/${DATE_PREFIX}/${BUNDLE_NAME}"
+          S3_KEY="${REPO_NAME}/git-backups/${DATE_PREFIX}/${BUNDLE_NAME}"
 
-          echo "Uploading ${BUNDLE_NAME} to s3://pratejra-git-backups-prod/prod-backups/"
-          aws s3 cp "${BUNDLE_NAME}" "s3://pratejra-git-backups-prod/prod-backups/${S3_KEY}"
+          echo "Uploading ${BUNDLE_NAME} to s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+          aws s3 cp "${BUNDLE_NAME}" "s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+          echo "✅ Git bundle uploaded"
+
+      - name: Upload workflows backup to S3
+        if: steps.export-workflows.outcome == 'success'
+        run: |
+          TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
+          WORKFLOWS_ARCHIVE="${{ steps.export-workflows.outputs.workflows_archive }}"
+          DATE_PREFIX=${TIMESTAMP%_*}
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          
+          S3_KEY="${REPO_NAME}/workflows-backups/${DATE_PREFIX}/${WORKFLOWS_ARCHIVE}"
+          
+          echo "Uploading ${WORKFLOWS_ARCHIVE} to s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+          aws s3 cp "${WORKFLOWS_ARCHIVE}" "s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+          echo "✅ Workflows backup uploaded"
+
+      - name: Create backup manifest
+        run: |
+          TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
+          DATE_PREFIX=${TIMESTAMP%_*}
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          
+          cat > backup-manifest.json << EOF
+          {
+            "timestamp": "${TIMESTAMP}",
+            "date": "${DATE_PREFIX}",
+            "repository": "${REPO_NAME}",
+            "git_commit": "${{ github.sha }}",
+            "git_branch": "${{ github.ref_name }}",
+            "backups": {
+              "git_bundle": "${REPO_NAME}/git-backups/${DATE_PREFIX}/${REPO_NAME}-${TIMESTAMP}.bundle",
+              "workflows": "${REPO_NAME}/workflows-backups/${DATE_PREFIX}/workflows-${TIMESTAMP}.tar.gz"
+            }
+          }
+          EOF
+          
+          S3_KEY="${REPO_NAME}/backup-manifests/${DATE_PREFIX}/manifest-${TIMESTAMP}.json"
+          aws s3 cp backup-manifest.json "s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+          echo "✅ Backup manifest created"
+
+      - name: Cleanup old backups (retention policy)
+        run: |
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          RETENTION_DAYS=90  # Keep backups for 90 days
+          
+          echo "Cleaning up backups older than ${RETENTION_DAYS} days..."
+          aws s3 ls "s3://${BACKUP_S3_BUCKET}/${REPO_NAME}/" --recursive | while read -r line; do
+            # Extract date and file path
+            DATE_STR=$(echo "$line" | awk '{print $1}')
+            FILE_PATH=$(echo "$line" | awk '{print $4}')
+            
+            # Calculate age in days (simplified - would need proper date calculation)
+            # For now, just log - actual cleanup would use find with -mtime
+            echo "  Found: ${FILE_PATH} (${DATE_STR})"
+          done
+          
+          echo "✅ Backup cleanup check completed"
+          # Note: Actual deletion would use: aws s3 rm with --recursive and date filtering

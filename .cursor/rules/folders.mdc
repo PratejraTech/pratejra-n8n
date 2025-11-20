@@ -2,8 +2,29 @@
 alwaysApply: true
 ---
 Always adhere to this folder structure. Files can be created but the only changes to be made are Docstrings explaining functionality. No destructive changes. This is simply a foundation for an automation platform
+
+## Directory Structure
+
 ```
 automation-platform/
+├── .cursor/
+│   └── rules/                    # Agent rule files (MDC format)
+│       ├── architecture.mdc       # System architecture
+│       ├── folders.mdc           # This file - directory structure
+│       ├── master.mdc            # Master governance rules
+│       ├── state.mdc             # Phase and milestone state tracking
+│       ├── architect-agent.mdc   # ARCHITECT_AGENT role definition
+│       ├── backend-agent.mdc     # BACKEND_AGENT role definition
+│       ├── integration-agent.mdc # INTEGRATION_AGENT role definition
+│       ├── qa-agent.mdc          # QA_AGENT role definition
+│       ├── workflow-governance.mdc # Phase workflow governance
+│       └── milestone-completion.mdc # Milestone completion process
+├── .agents/
+│   ├── prd.md                    # Product Requirements Document
+│   ├── tasks.md                  # Task generation list (generate-tasks.md)
+│   ├── process-tasks.md          # Task processing template
+│   └── reports/                  # Phase reports directory
+│       └── {phase_id}_{YYYY-MM-DD}.md  # Phase reports (auto-generated)
 ├── workflows/
 │   ├── platform/
 │   │   ├── error_central_handler.json
@@ -40,7 +61,39 @@ automation-platform/
 │   ├── export_workflows.sh
 │   ├── import_workflows.sh
 │   └── sync_n8n_env.yml
+├── ops/
+│   └── scripts/
+│       └── generating_task_processing_template.py  # Phase report generator
 └── .github/
     └── workflows/
-        # GitHub Actions / GitLab CI
+        ├── phase-kickoff.yaml     # Phase kickoff automation
+        ├── validate-workflows.yml
+        ├── deploy-workflows.yml
+        └── backup-to-s3.yaml
 ```
+
+## Key Directory Notes
+
+### .cursor/rules/
+- **Purpose:** Agent rule files in MDC format
+- **State file:** `.cursor/rules/state.mdc` (not in root)
+- **Rule files:** All agent-specific and governance rules
+- **Format:** YAML front matter + markdown content
+
+### .agents/
+- **Purpose:** Product requirements, tasks, and phase reports
+- **Reports:** `.agents/reports/` contains phase reports with naming: `{phase_id}_{YYYY-MM-DD}.md`
+- **Template:** `.agents/process-tasks.md` is a template (not updated directly)
+- **Static files:** `prd.md` and `tasks.md` are reference documents
+
+### Rule File Locations
+- All rule files live under `.cursor/rules/`
+- State file is at `.cursor/rules/state.mdc`
+- Architecture documentation is at `.cursor/rules/architecture.mdc`
+- Directory structure is at `.cursor/rules/folders.mdc` (this file)
+
+### Report Directory
+- **Location:** `.agents/reports/`
+- **Naming:** `{phase_id}_{YYYY-MM-DD}.md`
+- **Generation:** Automatic via GitHub Action phase kickoff
+- **Lifecycle:** Generated at kickoff, updated during phase, archived at completion

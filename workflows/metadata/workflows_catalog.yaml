@@ -1,0 +1,232 @@
+# Purpose: Automation Hub workflows catalog
+# Created/Updated: 2025-11-20
+# Agent: BACKEND_AGENT
+#
+# This catalog is automatically generated and provides a searchable index of all workflows.
+# Schema:
+# catalog:
+#   version: <version>
+#   generated_at: <timestamp>
+#   workflows:
+#     - id: <workflow_id>
+#       name: <workflow_name>
+#       domain: <domain>
+#       description: <description>
+#       version: <version>
+#       status: <active|draft|deprecated>
+#       endpoints: [<endpoint1>, <endpoint2>]
+#       dependencies: [<workflow_id1>, <workflow_id2>]
+#       tags: [<tag1>, <tag2>]
+
+catalog:
+  version: "1.0.0"
+  generated_at: "2025-11-20T00:00:00Z"
+  total_workflows: 12
+  
+  workflows:
+    # Shared/Platform Workflows
+    - id: "error_central_handler"
+      name: "Error Central Handler"
+      domain: "shared"
+      description: "Central error handling workflow for all platform workflows. Handles errors, retries, and notifications."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/shared/error_central_handler.json"
+      endpoints: []
+      dependencies: ["log_event", "notify_slack"]
+      tags: ["error-handling", "platform", "critical-path", "infrastructure"]
+      schema_validation:
+        required: true
+        schema_type: "incident"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "log_event"
+      name: "Log Event"
+      domain: "shared"
+      description: "Logs events to Prometheus and other observability systems with correlation IDs."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/shared/log_event.json"
+      endpoints: []
+      dependencies: []
+      tags: ["logging", "metrics", "platform", "observability"]
+      schema_validation:
+        required: true
+        schema_type: "event"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "notify_slack"
+      name: "Notify Slack"
+      domain: "shared"
+      description: "Sends notifications to Slack channels with configurable formatting and routing."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/shared/notify_slack.json"
+      endpoints: []
+      dependencies: []
+      tags: ["slack", "notifications", "platform"]
+      schema_validation:
+        required: false
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "approvals_generic"
+      name: "Generic Approvals"
+      domain: "shared"
+      description: "Generic approval workflow for high-risk operations requiring human approval via Slack."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/shared/approvals_generic.json"
+      endpoints: []
+      dependencies: ["notify_slack", "log_event"]
+      tags: ["approvals", "security", "governance", "slack"]
+      schema_validation:
+        required: true
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+
+    # CRM Domain Workflows
+    - id: "lead_intake"
+      name: "Lead Intake"
+      domain: "crm"
+      description: "Captures and processes new leads from various sources with validation and normalization."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/crm/lead_intake.json"
+      endpoints:
+        - "/webhook/lead-intake"
+      dependencies: ["validate_payload", "normalize_contact", "log_event", "error_central_handler"]
+      tags: ["crm", "leads", "data-pipeline", "data-ingestion"]
+      schema_validation:
+        required: true
+        schema_type: "contact"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "lead_enrichment"
+      name: "Lead Enrichment"
+      domain: "crm"
+      description: "Enriches lead data with additional information from external sources and computes risk scores."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/crm/lead_enrichment.json"
+      endpoints: []
+      dependencies: ["normalize_contact", "compute_risk_score", "log_event", "error_central_handler"]
+      tags: ["crm", "leads", "data-enrichment"]
+      schema_validation:
+        required: true
+        schema_type: "contact"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "lead_sync_to_crm"
+      name: "Lead Sync to CRM"
+      domain: "crm"
+      description: "Synchronizes enriched leads to external CRM systems with error handling and retry logic."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/crm/lead_sync_to_crm.json"
+      endpoints: []
+      dependencies: ["log_event", "notify_slack", "error_central_handler"]
+      tags: ["crm", "leads", "data-sync", "external-integration"]
+      schema_validation:
+        required: true
+        schema_type: "contact"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+
+    # Infrastructure Domain Workflows
+    - id: "infra_deploy_terraform"
+      name: "Infrastructure Deploy (Terraform)"
+      domain: "infra"
+      description: "Deploys infrastructure using Terraform triggered by GitHub Actions with approval gates."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/infra/infra_deploy_terraform.json"
+      endpoints:
+        - "/webhook/infra-deploy"
+      dependencies: ["approvals_generic", "log_event", "notify_slack", "error_central_handler"]
+      tags: ["terraform", "infrastructure", "deployment", "critical-path", "github-actions"]
+      schema_validation:
+        required: true
+        schema_type: "infra_deploy"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+        
+    - id: "infra_post_deploy_checks"
+      name: "Infrastructure Post-Deploy Checks"
+      domain: "infra"
+      description: "Validates infrastructure deployment success through health checks and validation tests."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/infra/infra_post_deploy_checks.json"
+      endpoints: []
+      dependencies: ["log_event", "notify_slack", "error_central_handler"]
+      tags: ["terraform", "infrastructure", "validation", "post-deploy"]
+      schema_validation:
+        required: true
+        schema_type: "infra_deploy"
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+
+    # Meta Domain Workflows
+    - id: "automation_catalog_builder"
+      name: "Automation Catalog Builder"
+      domain: "meta"
+      description: "Automatically generates and updates the workflows catalog and ownership metadata."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/meta/automation_catalog_builder.json"
+      endpoints: []
+      dependencies: []
+      tags: ["catalog", "metadata", "automation", "meta-operations"]
+      schema_validation:
+        required: false
+      observability:
+        metrics_enabled: false
+        logging_enabled: true
+        
+    - id: "workflow_health_check"
+      name: "Workflow Health Check"
+      domain: "meta"
+      description: "Monitors workflow health, execution success rates, and triggers alerts for degraded workflows."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/meta/workflow_health_check.json"
+      endpoints: []
+      dependencies: ["log_event", "notify_slack"]
+      tags: ["health-check", "monitoring", "meta-operations"]
+      schema_validation:
+        required: false
+      observability:
+        metrics_enabled: true
+        logging_enabled: true
+
+# Statistics
+statistics:
+  by_domain:
+    shared: 4
+    crm: 3
+    infra: 2
+    meta: 2
+  by_status:
+    active: 12
+    draft: 0
+    deprecated: 0
+  by_risk_level:
+    low: 1
+    medium: 5
+    high: 4
+    critical: 2
+

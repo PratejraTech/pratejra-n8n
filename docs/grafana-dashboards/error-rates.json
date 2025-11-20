@@ -1,0 +1,74 @@
+{
+  "dashboard": {
+    "title": "Automation Hub - Error Rates & Incidents",
+    "tags": ["automation-hub", "errors", "incidents"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Error Rate (Last 24h)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_failure_total[5m]))",
+            "legendFormat": "Errors/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Errors by Severity",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum by (severity) (incident_total{severity=~\"critical|high\"})",
+            "legendFormat": "{{severity}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}
+      },
+      {
+        "id": 3,
+        "title": "Error Handler Effectiveness",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(error_handler_success_total[5m])) / sum(rate(error_handler_total[5m])) * 100",
+            "legendFormat": "Handler Success %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 80, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Recent Critical Errors",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, incident_total{severity=\"critical\"})",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8}
+      }
+    ]
+  }
+}
+

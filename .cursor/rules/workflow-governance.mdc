@@ -1,0 +1,231 @@
+---
+description: "Workflow governance rules for phase management, task processing, and state tracking"
+globs:
+  - ".agents/reports/**/*.md"
+  - ".agents/process-tasks.md"
+  - ".cursor/rules/state.mdc"
+alwaysApply: false
+version: "1.0.0"
+---
+
+# Workflow Governance Rule
+
+## Purpose
+Defines the complete workflow for phase management, task processing, state tracking, and report generation in the Automation Hub project. This ensures consistent, traceable, and governed agent behavior across all phases.
+
+## Phase Lifecycle Overview
+
+### Phase States
+1. **Not Started:** Phase defined but not yet initiated
+2. **In Progress:** Phase active, tasks being executed
+3. **Completed:** Phase finished, all exit criteria met
+
+### Phase Transition Flow
+```
+Not Started → In Progress → Completed
+     ↑                          ↓
+     └────────── (via ARCHITECT_AGENT) ──────────┘
+```
+
+## Phase Kickoff Process
+
+### 1. Initiation
+**Triggered by:** ARCHITECT_AGENT  
+**Method:** GitHub Action workflow dispatch  
+**Workflow:** `.github/workflows/phase-kickoff.yaml`
+
+### 2. Required Inputs
+- `phase_id`: Phase identifier (e.g., `phase_1`)
+- `phase_name`: Phase display name (e.g., `Foundation & Environment`)
+- `next_phase`: Next phase display name (for report template)
+
+### 3. Automated Actions
+The phase kickoff workflow:
+1. Checks out repository
+2. Sets up Python environment
+3. Runs `ops/scripts/generating_task_processing_template.py` with inputs
+4. Script updates `.cursor/rules/state.mdc`:
+   - Sets phase status to "In Progress"
+   - Sets `start_date` if not already set
+   - Adds history entry
+5. Script generates report in `.agents/reports/{phase_id}_{YYYY-MM-DD}.md`
+6. Commits changes to repository
+
+### 4. Post-Kickoff
+- ARCHITECT_AGENT verifies state.mdc update
+- ARCHITECT_AGENT verifies report creation
+- Agents are notified to begin tasks
+- Task-processing report is available for updates
+
+## Task Processing Workflow
+
+### During Phase Execution
+
+#### Agent Responsibilities
+- **BACKEND_AGENT:** Updates State Summary with implementation progress
+- **INTEGRATION_AGENT:** Updates State Summary with CI/CD progress
+- **QA_AGENT:** Updates State Summary with test results and blockers
+
+#### Report Updates
+All agents update the phase report (`.agents/reports/{phase_id}_{YYYY-MM-DD}.md`):
+1. Mark subtasks as started or complete in Phase Checklist
+2. Update State Summary table with current status
+3. Document blockers in State Summary table
+4. Update progress continuously as work progresses
+
+#### State Summary Format
+| Module       | Phase        | Status        | Blockers                          |
+|--------------|--------------|---------------|----------------------------------|
+| Backend      | {Phase Name} | NotStarted/InProgress/Done | {List blockers} |
+| Integration  | {Phase Name} | NotStarted/InProgress/Done | {List blockers} |
+| QA           | {Phase Name} | NotStarted/InProgress/Done | {List blockers} |
+
+### Blocker Management
+- Blockers must be documented immediately in State Summary
+- QA_AGENT logs blockers in reports
+- ARCHITECT_AGENT is notified of blockers
+- Blockers must be resolved before phase completion
+
+## State Update Protocols
+
+### State File Location
+State file is maintained at: `.cursor/rules/state.mdc`
+
+### Update Authority
+- **Only ARCHITECT_AGENT** may change phase status
+- Status transitions must follow: `Not Started` → `In Progress` → `Completed`
+- All status changes must include history entry
+
+### History Entry Format
+```yaml
+history:
+  - timestamp: "YYYY-MM-DDTHH:MM:SSZ"
+    agent: "AGENT_NAME"
+    action: "Description of action"
+```
+
+### State File Structure
+State file contains:
+- `phases`: List of phase definitions with status, dates, milestones
+- `history`: Chronological log of state changes
+- `last_updated`: Date of last update
+
+## Milestone Completion Process
+
+### At Milestone End
+When a milestone is completed:
+1. **Update state.mdc:**
+   - Mark milestone status as "Completed"
+   - Set `completed_date` to current date
+   - Add history entry
+2. **Commit changes:**
+   - Commit message format: `"Complete milestone {milestone_id} – {milestone_title}"`
+   - Include state.mdc and any related files
+3. **Update process-tasks.md:**
+   - Document milestone completion
+   - Update State Summary
+   - Note any lessons learned
+
+### Milestone vs Phase Completion
+- **Milestone:** Sub-goal within a phase (can have multiple milestones per phase)
+- **Phase:** Major project stage (has exit criteria and formal completion process)
+
+See `milestone-completion.mdc` for detailed milestone completion process.
+
+## Phase Exit & Reporting
+
+### Exit Criteria Validation
+**Performed by:** QA_AGENT
+
+QA_AGENT validates:
+- ✅ All implementation tasks done
+- ✅ All tests pass (unit, integration, E2E)
+- ✅ Documentation updated (PRD, architecture.mdc, state.mdc)
+- ✅ No open high-priority issues
+- ✅ State Summary reflects completion status
+
+### Phase Completion Process
+1. **QA_AGENT validates exit criteria:**
+   - Reviews task-processing report
+   - Executes test/validation tasks
+   - Confirms all criteria met
+   - Approves phase completion
+
+2. **ARCHITECT_AGENT updates state.mdc:**
+   - Sets phase status to "Completed"
+   - Sets `end_date` to current date
+   - Adds history entry documenting completion
+
+3. **Report finalization:**
+   - Fill in Exit Criteria checkboxes
+   - Complete Reflection & Next Steps section
+   - Archive report in `.agents/reports/`
+
+4. **Commit and notification:**
+   - Commit message: `"Complete {phase_name} – phase {phase_id}"`
+   - Include state.mdc and final report
+   - Trigger notification for next phase
+
+## Report Generation & Archival
+
+### Report Naming Convention
+Reports follow pattern: `{phase_id}_{YYYY-MM-DD}.md`
+
+Examples:
+- `phase_1_2025-11-20.md`
+- `phase_2_2025-12-15.md`
+
+### Report Location
+All reports stored in: `.agents/reports/`
+
+### Report Template
+Reports are generated from template in `ops/scripts/generating_task_processing_template.py`:
+- Phase Checklist
+- State Summary table
+- Exit Criteria checklist
+- Reflection & Next Steps
+- Report output path
+
+### Report Lifecycle
+1. **Generated:** At phase kickoff via GitHub Action
+2. **Updated:** Continuously during phase execution
+3. **Finalized:** At phase completion with exit criteria and reflection
+4. **Archived:** Permanently stored in `.agents/reports/` for traceability
+
+## Integration with Other Rules
+
+### Related Rule Files
+- `architect-agent.mdc`: Phase management authority
+- `backend-agent.mdc`: Task implementation workflow
+- `integration-agent.mdc`: CI/CD integration workflow
+- `qa-agent.mdc`: Exit criteria validation
+- `milestone-completion.mdc`: Milestone completion process
+- `master.mdc`: Project-wide governance
+
+### State File Management
+State file updates must comply with:
+- Authority restrictions (ARCHITECT_AGENT only for status changes)
+- History entry requirements
+- Status transition rules
+- Commit message conventions
+
+## Compliance & Traceability
+
+### Audit Trail
+All phase activities are traceable through:
+- State file history entries
+- Phase reports with timestamps
+- Commit messages referencing phases
+- Task-processing updates
+
+### Governance Enforcement
+- CI/CD pipelines validate state file update protocols
+- Rule compliance checks enforce workflow adherence
+- Non-compliance triggers ARCHITECT_AGENT review
+
+## References
+- See `architect-agent.mdc` for phase management authority
+- See `qa-agent.mdc` for exit criteria validation
+- See `milestone-completion.mdc` for milestone completion details
+- See `.github/workflows/phase-kickoff.yaml` for kickoff automation
+- See `ops/scripts/generating_task_processing_template.py` for report generation

@@ -1,0 +1,68 @@
+---
+description: "Master rule file governing project-wide structure, naming, agent behavior and file state updates."
+globs:
+  - "*"
+alwaysApply: true
+version: "1.0"
+---
+
+# Master Project Rule: Automation Hub Structure & Governance
+
+## Purpose  
+This rule defines the core project-governance standards for the “Automation Hub (n8n Enterprise Automation Backbone)” repository. All agents and contributors must comply with the criteria herein.
+
+## 1. File Structure & Naming  
+- All new top-level directories must be declared in `architecture.mdc` (or `system.mdc`) **before** use.  
+- Files under `.cursor/rules/` must:  
+  - Use kebab-case for filenames (e.g., `master.mdc`, `ci-deploy-rules.mdc`).  
+  - Have `.mdc` extension.  
+  - Contain valid YAML front-matter with `description`, `globs`, `alwaysApply`, `version`.  
+- Agent report files must live under `.agents/reports/` and follow the naming pattern: `{phase_id}_{YYYY-MM-DD}.md`.  
+- State file is `.cursor/rules/state.mdc`; must not be renamed or moved.
+
+## 2. Agent Roles & Behavior  
+- **ARCHITECT_AGENT**: Only it may update `architecture.mdc`, define new top-level folders, promote phases in `state.mdc`. See `architect-agent.mdc` for detailed responsibilities.  
+- **BACKEND_AGENT**: May add workflows, schemas, code under approved domains (`/workflows/domains/…`, `/shared/`). Cannot introduce new folder roots without architecture update. See `backend-agent.mdc` for detailed responsibilities.  
+- **INTEGRATION_AGENT**: Manages CI/CD workflows under `/ci/` and `.github/workflows/`. Must ensure compliance with master rules. See `integration-agent.mdc` for detailed responsibilities.  
+- **QA_AGENT**: Reviews and approves tasks, tests, and state transitions; may flag non-compliance to ARCHITECT_AGENT. See `qa-agent.mdc` for detailed responsibilities.
+
+## 3. Phase & State-Update Protocol  
+- At the start of a phase:  
+  1. ARCHITECT_AGENT triggers "Phase Kickoff – Task Processing Report Generation" GitHub Action.  
+  2. Script updates `.cursor/rules/state.mdc` to status "In Progress" and generates report in `.agents/reports/{phase_id}_{YYYY-MM-DD}.md`.  
+- During phase:  
+  - Agents update the phase report with progress, blockers, and state summary.  
+  - Any new folder/components must also be updated in `architecture.mdc` and reflect in `folders.mdc`.  
+  - At milestone completion: update state.mdc, commit, and update process-tasks.md (see `milestone-completion.mdc`).  
+- At phase exit:  
+  - QA_AGENT confirms exit criteria satisfied.  
+  - ARCHITECT_AGENT updates `.cursor/rules/state.mdc` to status "Completed", sets `end_date`, records history entry.  
+  - Commit messages must reference phase id and should follow conventional style (see naming conventions).  
+- See `workflow-governance.mdc` for complete phase lifecycle workflow.
+
+## 4. CI/CD and Rule Enforcement  
+- All pull requests must pass checks that:  
+  - No new files outside approved directories unless registered.  
+  - YAML front-matter in `.mdc` rule files is valid.  
+  - `.cursor/rules/state.mdc` changes follow protocol (status transitions only allowed by ARCHITECT_AGENT).  
+- Use linting or verification scripts to enforce `.cursor/rules/` file format.  
+- When a folder is added or renamed, both `architecture.mdc` and `folders.mdc` must be updated in the same commit — else CI fails.
+
+## 5. Exceptions & Escalation  
+- If an agent must deviate (e.g., urgent infra fix that needs new directory), they must raise an issue assigned to ARCHITECT_AGENT and receive approval before proceeding.  
+- Any repeated violations will trigger review by ARCHITECT_AGENT and may block further merges until compliance is restored.
+
+## 6. Related Rule Files
+For detailed agent responsibilities and workflows, see:
+- `architect-agent.mdc` - ARCHITECT_AGENT role and phase management
+- `backend-agent.mdc` - BACKEND_AGENT role and workflow implementation
+- `integration-agent.mdc` - INTEGRATION_AGENT role and CI/CD management
+- `qa-agent.mdc` - QA_AGENT role and quality assurance
+- `workflow-governance.mdc` - Complete phase lifecycle workflow
+- `milestone-completion.mdc` - Milestone completion process
+- `architecture.mdc` - System architecture and component map
+- `folders.mdc` - Directory structure and conventions
+
+---
+
+**End of master.mdc**

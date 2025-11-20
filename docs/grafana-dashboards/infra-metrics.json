@@ -1,0 +1,80 @@
+{
+  "dashboard": {
+    "title": "Automation Hub - Infrastructure Metrics",
+    "tags": ["automation-hub", "infrastructure", "terraform"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Infrastructure Deployment Latency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(infra_deploy_latency_ms_bucket[5m])) by (le))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(infra_deploy_latency_ms_bucket[5m])) by (le))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "label": "Latency (ms)"}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Deployment Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(infra_deploy_success_total[5m])) / (sum(rate(infra_deploy_success_total[5m])) + sum(rate(infra_deploy_failure_total[5m]))) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Deployments by Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (status) (infra_deploy_total)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Post-Deploy Check Results",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "sum by (check_name) (post_deploy_check_total)",
+            "legendFormat": "{{check_name}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ]
+  }
+}
+

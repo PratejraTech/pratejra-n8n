@@ -1,0 +1,46 @@
+name: “Phase Kickoff – Task Processing Report Generation”
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase_id:
+        description: 'Phase ID (e.g. phase_1)'
+        required: true
+      phase_name:
+        description: 'Phase display name (e.g. Foundation & Environment)'
+        required: true
+      next_phase:
+        description: 'Next phase display name'
+        required: true
+
+jobs:
+  generate_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies (if any)
+        run: |
+          pip install pyyaml
+
+      - name: Run task processing template generator
+        run: |
+          python ops/scripts/generating_task_processing_template.py \
+            --phase ${{ github.event.inputs.phase_id }} \
+            --phase-name "${{ github.event.inputs.phase_name }}" \
+            --next-phase "${{ github.event.inputs.next_phase }}"
+
+      - name: Commit generated report and updated state.mdc
+        run: |
+          git config --local user.email "ci-bot@example.com"
+          git config --local user.name  "CI Bot"
+          git add .agents/reports
+          git add .cursor/rules/state.mdc
+          git commit -m "Kickoff ${GITHUB_EVENT_INPUTS_phase_name} – update state"
+          git push

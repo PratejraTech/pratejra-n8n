@@ -1,4 +1,95 @@
 # Purpose: Development environment configuration settings
-# Created/Updated: 2025-11-19 19:49
-# Agent: Init Agent
+# Created/Updated: 2025-11-20
+# Agent: BACKEND_AGENT
 
+# Development Environment Configuration
+# All secrets must be referenced via AWS Secrets Manager - never hardcoded
+
+environment: dev
+
+# n8n Instance Configuration
+n8n:
+  base_url: "http://localhost:5678"  # Development n8n instance
+  webhook_url: "http://localhost:5678/webhook"
+  api_endpoint: "http://localhost:5678/api/v1"
+  health_check_endpoint: "http://localhost:5678/healthz"
+  
+  # Credentials stored in AWS Secrets Manager
+  # Reference: aws secretsmanager get-secret-value --secret-id automation-hub/n8n/dev/api-key
+  api_key_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/n8n/dev/api-key"
+  
+# AWS Configuration
+aws:
+  region: "us-east-1"
+  account_id: "123456789012"  # Placeholder - use actual dev account
+  
+  # Secrets Manager Configuration
+  secrets_manager:
+    prefix: "automation-hub/dev"
+    # Secret ARNs for various services
+    n8n_api_key: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/n8n-api-key"
+    slack_webhook: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/slack-webhook"
+    terraform_state_bucket: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/terraform-state"
+    
+  # S3 Configuration
+  s3:
+    workflow_backups_bucket: "automation-hub-dev-workflows"
+    backup_retention_days: 30
+    
+  # IAM Roles
+  iam:
+    n8n_execution_role: "arn:aws:iam::ACCOUNT:role/automation-hub-dev-n8n-execution"
+    backup_role: "arn:aws:iam::ACCOUNT:role/automation-hub-dev-backup"
+
+# External Service Endpoints
+external_services:
+  slack:
+    # Webhook URL stored in AWS Secrets Manager
+    webhook_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/slack-webhook"
+    default_channel: "#automation-dev"
+    
+  prometheus:
+    endpoint: "http://localhost:9090"
+    metrics_path: "/api/v1/query"
+    
+  grafana:
+    endpoint: "http://localhost:3000"
+    api_key_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/grafana-api-key"
+
+# Internal API Configuration
+internal_api:
+  base_url: "http://localhost:5678/internal/api/v1"
+  version: "v1"
+  endpoints:
+    events: "/internal/api/v1/events"
+    health: "/internal/api/v1/health"
+    
+# Workflow Configuration
+workflows:
+  default_retry_attempts: 3
+  default_retry_delay_ms: 1000
+  error_handler_workflow: "error_central_handler"
+  log_event_workflow: "log_event"
+  
+# Schema Configuration
+schemas:
+  version: "v1"
+  validation_enabled: true
+  schema_base_path: "/shared/schemas"
+  
+# Logging Configuration
+logging:
+  level: "debug"
+  format: "json"
+  correlation_id_enabled: true
+  output:
+    - "console"
+    - "prometheus"
+    
+# Feature Flags
+features:
+  schema_validation: true
+  error_handler_enabled: true
+  slack_notifications: true
+  prometheus_metrics: true
+  workflow_backups: true

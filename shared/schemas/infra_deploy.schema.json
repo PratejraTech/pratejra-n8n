@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/infra_deploy.schema.json",
+  "title": "Infrastructure Deployment Schema v1",
+  "description": "Schema for infrastructure deployment events triggered by GitHub Actions",
+  "type": "object",
+  "required": ["id", "deployment_type", "environment", "status", "triggered_by", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique deployment identifier (UUID format recommended)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "deployment_type": {
+      "type": "string",
+      "description": "Type of infrastructure deployment",
+      "enum": ["terraform", "kubernetes", "docker", "cloudformation", "other"]
+    },
+    "environment": {
+      "type": "string",
+      "description": "Target deployment environment",
+      "enum": ["dev", "staging", "prod"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Current deployment status",
+      "enum": ["pending", "in_progress", "success", "failed", "rolled_back", "cancelled"]
+    },
+    "triggered_by": {
+      "type": "object",
+      "description": "Information about what triggered the deployment",
+      "required": ["type", "source"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["github_action", "manual", "scheduled", "webhook"]
+        },
+        "source": {
+          "type": "string",
+          "description": "Source identifier (e.g., GitHub Actions run ID, user ID)"
+        },
+        "user": {
+          "type": ["string", "null"],
+          "description": "User who triggered the deployment (if applicable)"
+        },
+        "commit_sha": {
+          "type": ["string", "null"],
+          "description": "Git commit SHA that triggered the deployment"
+        },
+        "branch": {
+          "type": ["string", "null"],
+          "description": "Git branch name"
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "description": "Deployment target information",
+      "properties": {
+        "resource_type": {
+          "type": ["string", "null"],
+          "description": "Type of resource being deployed (e.g., 'ec2', 's3', 'lambda')"
+        },
+        "resource_name": {
+          "type": ["string", "null"],
+          "description": "Name of the resource"
+        },
+        "region": {
+          "type": ["string", "null"],
+          "description": "AWS region or equivalent"
+        },
+        "terraform_workspace": {
+          "type": ["string", "null"],
+          "description": "Terraform workspace name (if applicable)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when deployment was initiated",
+      "format": "date-time"
+    },
+    "started_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when deployment started",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp when deployment completed",
+      "format": "date-time"
+    },
+    "duration_seconds": {
+      "type": ["number", "null"],
+      "description": "Deployment duration in seconds",
+      "minimum": 0
+    },
+    "output": {
+      "type": ["object", "null"],
+      "description": "Deployment output/results",
+      "properties": {
+        "terraform_output": {
+          "type": ["object", "null"],
+          "description": "Terraform output values (if applicable)",
+          "additionalProperties": true
+        },
+        "resources_created": {
+          "type": ["array", "null"],
+          "description": "List of resources created",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resources_updated": {
+          "type": ["array", "null"],
+          "description": "List of resources updated",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resources_destroyed": {
+          "type": ["array", "null"],
+          "description": "List of resources destroyed",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "error": {
+      "type": ["object", "null"],
+      "description": "Error information if deployment failed",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "code": {
+          "type": ["string", "null"],
+          "description": "Error code"
+        },
+        "details": {
+          "type": ["object", "null"],
+          "description": "Additional error details",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "post_deploy_checks": {
+      "type": ["object", "null"],
+      "description": "Results of post-deployment validation checks",
+      "properties": {
+        "status": {
+          "type": ["string", "null"],
+          "enum": ["pending", "passed", "failed", null]
+        },
+        "checks": {
+          "type": ["array", "null"],
+          "description": "List of check results",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["passed", "failed", "skipped"]
+              },
+              "message": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": ["name", "status"]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the deployment",
+      "properties": {
+        "approval_required": {
+          "type": ["boolean", "null"],
+          "description": "Whether approval was required"
+        },
+        "approved_by": {
+          "type": ["string", "null"],
+          "description": "User who approved the deployment"
+        },
+        "notified_channels": {
+          "type": ["array", "null"],
+          "description": "Slack channels notified about the deployment",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

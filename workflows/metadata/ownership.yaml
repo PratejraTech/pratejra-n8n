@@ -1,0 +1,238 @@
+# Purpose: Workflow ownership and governance metadata
+# Created/Updated: 2025-11-20
+# Agent: BACKEND_AGENT
+#
+# This file defines ownership, risk classification, and maintenance responsibilities
+# for all workflows in the Automation Hub platform.
+
+# Schema:
+# workflows:
+#   - id: <workflow_id>
+#     name: <workflow_name>
+#     domain: <domain_name>
+#     owner:
+#       team: <team_name>
+#       primary: <primary_owner_email>
+#       secondary: <secondary_owner_email>
+#     risk_level: <low|medium|high|critical>
+#     classification:
+#       category: <category>
+#       tags: [<tag1>, <tag2>]
+#     maintenance:
+#       runbook_url: <url>
+#       last_reviewed: <YYYY-MM-DD>
+#       review_frequency: <daily|weekly|monthly|quarterly>
+
+workflows:
+  # Shared/Platform Workflows
+  - id: "error_central_handler"
+    name: "Error Central Handler"
+    domain: "shared"
+    file_path: "workflows/domains/shared/error_central_handler.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "devops-team@example.com"
+    risk_level: "critical"
+    classification:
+      category: "infrastructure"
+      tags: ["error-handling", "platform", "critical-path"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#error-central-handler"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+      
+  - id: "log_event"
+    name: "Log Event"
+    domain: "shared"
+    file_path: "workflows/domains/shared/log_event.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "devops-team@example.com"
+    risk_level: "high"
+    classification:
+      category: "observability"
+      tags: ["logging", "metrics", "platform"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#log-event"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+      
+  - id: "notify_slack"
+    name: "Notify Slack"
+    domain: "shared"
+    file_path: "workflows/domains/shared/notify_slack.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "devops-team@example.com"
+    risk_level: "medium"
+    classification:
+      category: "notifications"
+      tags: ["slack", "notifications", "platform"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#notify-slack"
+      last_reviewed: "2025-11-20"
+      review_frequency: "quarterly"
+      
+  - id: "approvals_generic"
+    name: "Generic Approvals"
+    domain: "shared"
+    file_path: "workflows/domains/shared/approvals_generic.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "security-team@example.com"
+    risk_level: "high"
+    classification:
+      category: "governance"
+      tags: ["approvals", "security", "governance"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#approvals-generic"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+
+  # CRM Domain Workflows
+  - id: "lead_intake"
+    name: "Lead Intake"
+    domain: "crm"
+    file_path: "workflows/domains/crm/lead_intake.json"
+    owner:
+      team: "CRM Engineering"
+      primary: "crm-team@example.com"
+      secondary: "sales-ops@example.com"
+    risk_level: "medium"
+    classification:
+      category: "data-ingestion"
+      tags: ["crm", "leads", "data-pipeline"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#lead-intake"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+      
+  - id: "lead_enrichment"
+    name: "Lead Enrichment"
+    domain: "crm"
+    file_path: "workflows/domains/crm/lead_enrichment.json"
+    owner:
+      team: "CRM Engineering"
+      primary: "crm-team@example.com"
+      secondary: "sales-ops@example.com"
+    risk_level: "medium"
+    classification:
+      category: "data-enrichment"
+      tags: ["crm", "leads", "data-enrichment"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#lead-enrichment"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+      
+  - id: "lead_sync_to_crm"
+    name: "Lead Sync to CRM"
+    domain: "crm"
+    file_path: "workflows/domains/crm/lead_sync_to_crm.json"
+    owner:
+      team: "CRM Engineering"
+      primary: "crm-team@example.com"
+      secondary: "sales-ops@example.com"
+    risk_level: "high"
+    classification:
+      category: "data-sync"
+      tags: ["crm", "leads", "data-sync", "external-integration"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#lead-sync-to-crm"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+
+  # Infrastructure Domain Workflows
+  - id: "infra_deploy_terraform"
+    name: "Infrastructure Deploy (Terraform)"
+    domain: "infra"
+    file_path: "workflows/domains/infra/infra_deploy_terraform.json"
+    owner:
+      team: "DevOps"
+      primary: "devops-team@example.com"
+      secondary: "platform-team@example.com"
+    risk_level: "critical"
+    classification:
+      category: "infrastructure"
+      tags: ["terraform", "infrastructure", "deployment", "critical-path"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#infra-deploy-terraform"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+      
+  - id: "infra_post_deploy_checks"
+    name: "Infrastructure Post-Deploy Checks"
+    domain: "infra"
+    file_path: "workflows/domains/infra/infra_post_deploy_checks.json"
+    owner:
+      team: "DevOps"
+      primary: "devops-team@example.com"
+      secondary: "platform-team@example.com"
+    risk_level: "high"
+    classification:
+      category: "validation"
+      tags: ["terraform", "infrastructure", "validation", "post-deploy"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#infra-post-deploy-checks"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+
+  # Meta Domain Workflows
+  - id: "automation_catalog_builder"
+    name: "Automation Catalog Builder"
+    domain: "meta"
+    file_path: "workflows/domains/meta/automation_catalog_builder.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "devops-team@example.com"
+    risk_level: "low"
+    classification:
+      category: "meta-operations"
+      tags: ["catalog", "metadata", "automation"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#automation-catalog-builder"
+      last_reviewed: "2025-11-20"
+      review_frequency: "quarterly"
+      
+  - id: "workflow_health_check"
+    name: "Workflow Health Check"
+    domain: "meta"
+    file_path: "workflows/domains/meta/workflow_health_check.json"
+    owner:
+      team: "Platform Engineering"
+      primary: "platform-team@example.com"
+      secondary: "devops-team@example.com"
+    risk_level: "medium"
+    classification:
+      category: "monitoring"
+      tags: ["health-check", "monitoring", "meta-operations"]
+    maintenance:
+      runbook_url: "docs/RUNBOOKS.md#workflow-health-check"
+      last_reviewed: "2025-11-20"
+      review_frequency: "monthly"
+
+# Global Settings
+settings:
+  default_owner_team: "Platform Engineering"
+  default_review_frequency: "quarterly"
+  risk_levels:
+    - "low"
+    - "medium"
+    - "high"
+    - "critical"
+  categories:
+    - "infrastructure"
+    - "data-ingestion"
+    - "data-enrichment"
+    - "data-sync"
+    - "notifications"
+    - "observability"
+    - "governance"
+    - "meta-operations"
+    - "monitoring"
+    - "validation"
+

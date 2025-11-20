@@ -1,4 +1,95 @@
 # Purpose: Production environment configuration settings
-# Created/Updated: 2025-11-19 19:49
-# Agent: Init Agent
+# Created/Updated: 2025-11-20
+# Agent: BACKEND_AGENT
 
+# Production Environment Configuration
+# All secrets must be referenced via AWS Secrets Manager - never hardcoded
+
+environment: prod
+
+# n8n Instance Configuration
+n8n:
+  base_url: "https://n8n.automation-hub.example.com"  # Production n8n instance
+  webhook_url: "https://n8n.automation-hub.example.com/webhook"
+  api_endpoint: "https://n8n.automation-hub.example.com/api/v1"
+  health_check_endpoint: "https://n8n.automation-hub.example.com/healthz"
+  
+  # Credentials stored in AWS Secrets Manager
+  # Reference: aws secretsmanager get-secret-value --secret-id automation-hub/n8n/prod/api-key
+  api_key_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/n8n/prod/api-key"
+  
+# AWS Configuration
+aws:
+  region: "us-east-1"
+  account_id: "987654321098"  # Placeholder - use actual prod account
+  
+  # Secrets Manager Configuration
+  secrets_manager:
+    prefix: "automation-hub/prod"
+    # Secret ARNs for various services
+    n8n_api_key: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/prod/n8n-api-key"
+    slack_webhook: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/prod/slack-webhook"
+    terraform_state_bucket: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/prod/terraform-state"
+    
+  # S3 Configuration
+  s3:
+    workflow_backups_bucket: "automation-hub-prod-workflows"
+    backup_retention_days: 90  # Longer retention for production
+    
+  # IAM Roles
+  iam:
+    n8n_execution_role: "arn:aws:iam::ACCOUNT:role/automation-hub-prod-n8n-execution"
+    backup_role: "arn:aws:iam::ACCOUNT:role/automation-hub-prod-backup"
+
+# External Service Endpoints
+external_services:
+  slack:
+    # Webhook URL stored in AWS Secrets Manager
+    webhook_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/prod/slack-webhook"
+    default_channel: "#automation-prod"
+    
+  prometheus:
+    endpoint: "https://prometheus.automation-hub.example.com"
+    metrics_path: "/api/v1/query"
+    
+  grafana:
+    endpoint: "https://grafana.automation-hub.example.com"
+    api_key_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/prod/grafana-api-key"
+
+# Internal API Configuration
+internal_api:
+  base_url: "https://n8n.automation-hub.example.com/internal/api/v1"
+  version: "v1"
+  endpoints:
+    events: "/internal/api/v1/events"
+    health: "/internal/api/v1/health"
+    
+# Workflow Configuration
+workflows:
+  default_retry_attempts: 5  # More retries in production
+  default_retry_delay_ms: 2000
+  error_handler_workflow: "error_central_handler"
+  log_event_workflow: "log_event"
+  
+# Schema Configuration
+schemas:
+  version: "v1"
+  validation_enabled: true
+  schema_base_path: "/shared/schemas"
+  
+# Logging Configuration
+logging:
+  level: "info"  # Less verbose in production
+  format: "json"
+  correlation_id_enabled: true
+  output:
+    - "prometheus"
+    - "cloudwatch"  # Production logging destination
+    
+# Feature Flags
+features:
+  schema_validation: true
+  error_handler_enabled: true
+  slack_notifications: true
+  prometheus_metrics: true
+  workflow_backups: true
