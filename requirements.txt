@@ -1,0 +1,6 @@
+# Production dependencies for Automation Hub
+# Install with: pip install -r requirements.txt
+
+# YAML parsing for configuration and state files
+PyYAML>=6.0.1
+

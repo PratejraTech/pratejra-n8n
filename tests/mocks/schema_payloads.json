@@ -1,0 +1,72 @@
+{
+  "valid_event": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "type": "contact.created",
+    "source": "n8n",
+    "env": "dev",
+    "timestamp": "2025-11-20T10:00:00Z",
+    "correlation_id": "corr-123",
+    "payload": {
+      "contact_id": "contact-123"
+    },
+    "meta": {
+      "tags": ["crm", "contact"],
+      "version": "v1"
+    }
+  },
+  "invalid_event_missing_required": {
+    "type": "contact.created"
+  },
+  "invalid_event_bad_uuid": {
+    "id": "not-a-uuid",
+    "type": "contact.created",
+    "source": "n8n",
+    "env": "dev",
+    "timestamp": "2025-11-20T10:00:00Z",
+    "payload": {}
+  },
+  "valid_contact": {
+    "email": "test@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "company": "Example Corp",
+    "phone": "+1234567890",
+    "status": "new",
+    "source": "website",
+    "tags": ["lead", "qualified"],
+    "created_at": "2025-11-20T10:00:00Z"
+  },
+  "invalid_contact_bad_email": {
+    "email": "not-an-email"
+  },
+  "valid_incident": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "source": "n8n",
+    "severity": "high",
+    "status": "open",
+    "event_type": "workflow.error",
+    "error": {
+      "message": "Workflow execution failed",
+      "type": "ValidationError"
+    },
+    "context": {
+      "env": "dev",
+      "service": "n8n",
+      "correlation_id": "corr-123"
+    },
+    "created_at": "2025-11-20T10:00:00Z"
+  },
+  "valid_infra_deploy": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "deployment_type": "terraform",
+    "environment": "dev",
+    "status": "in_progress",
+    "triggered_by": {
+      "type": "github_action",
+      "source": "run-123",
+      "commit_sha": "abc123def456"
+    },
+    "created_at": "2025-11-20T10:00:00Z"
+  }
+}
+

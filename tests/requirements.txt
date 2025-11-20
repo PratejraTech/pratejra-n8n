@@ -1,0 +1,17 @@
+# Test dependencies for Automation Hub test suite
+# Install with: pip install -r tests/requirements.txt
+# Note: For full development setup, use: pip install -r requirements-dev.txt
+
+# Include main requirements
+-r ../requirements.txt
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Schema validation (for schema tests)
+jsonschema>=4.19.0
+
+# Development utilities
+greenlet>=3.2.0
+
