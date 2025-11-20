@@ -1,4 +1,5 @@
 ---
+description: "Project state tracking for phases, milestones, and history"
 alwaysApply: true
 ---
 

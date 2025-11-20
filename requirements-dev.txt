@@ -1,0 +1,21 @@
+# Development dependencies for Automation Hub
+# Install with: pip install -r requirements-dev.txt
+# This includes all production dependencies plus development tools
+
+# Include production dependencies
+-r requirements.txt
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Schema validation
+jsonschema>=4.19.0
+
+# Development utilities
+greenlet>=3.2.0
+
+# Build tools (usually included with venv, but listed for completeness)
+setuptools>=65.0.0
+wheel>=0.40.0
+

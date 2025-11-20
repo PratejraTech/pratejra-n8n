@@ -1,4 +1,5 @@
 ---
+description: "Directory structure standards and conventions for the Automation Hub"
 alwaysApply: true
 ---
 Always adhere to this folder structure. Files can be created but the only changes to be made are Docstrings explaining functionality. No destructive changes. This is simply a foundation for an automation platform
