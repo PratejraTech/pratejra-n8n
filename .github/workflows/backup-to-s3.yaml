@@ -18,20 +18,52 @@ permissions:
   id-token: write    # required for OIDC
   contents: read     # required to checkout
 
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
-  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-
 jobs:
   backup:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
     steps:
       - name: Checkout repository (full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0   # IMPORTANT: we want all history
+
+      - name: Validate required secrets
+        run: |
+          echo "Validating required secrets..."
+          
+          if [ -z "${{ secrets.BACKUP_S3_BUCKET }}" ] || [ "${{ secrets.BACKUP_S3_BUCKET }}" = "" ]; then
+            echo "❌ ERROR: BACKUP_S3_BUCKET secret is not set or is empty"
+            echo "Please configure the BACKUP_S3_BUCKET secret in repository settings"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.AWS_REGION }}" ] || [ "${{ secrets.AWS_REGION }}" = "" ]; then
+            echo "❌ ERROR: AWS_REGION secret is not set or is empty"
+            echo "Please configure the AWS_REGION secret in repository settings"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ] || [ "${{ secrets.AWS_ROLE_TO_ASSUME }}" = "" ]; then
+            echo "❌ ERROR: AWS_ROLE_TO_ASSUME secret is not set or is empty"
+            echo "Please configure the AWS_ROLE_TO_ASSUME secret in repository settings"
+            exit 1
+          fi
+          
+          # Validate bucket name format (basic check)
+          BUCKET_NAME="${{ secrets.BACKUP_S3_BUCKET }}"
+          if ! echo "$BUCKET_NAME" | grep -qE '^[a-zA-Z0-9.\-_]{1,255}$'; then
+            echo "❌ ERROR: Invalid S3 bucket name format: $BUCKET_NAME"
+            echo "Bucket name must match: ^[a-zA-Z0-9.\-_]{1,255}$"
+            exit 1
+          fi
+          
+          echo "✅ All required secrets are configured"
+          echo "✅ Bucket name format is valid"
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
@@ -72,10 +104,18 @@ jobs:
           echo "✅ Workflows exported"
 
       - name: Upload git bundle to S3
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
           BUNDLE_NAME="${{ steps.create_bundle.outputs.bundle_name }}"
           TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
+
+          # Validate bucket name is set
+          if [ -z "${BACKUP_S3_BUCKET}" ] || [ "${BACKUP_S3_BUCKET}" = "" ]; then
+            echo "❌ ERROR: BACKUP_S3_BUCKET environment variable is not set"
+            exit 1
+          fi
 
           # Directory structure: myrepo/backups/YYYY-MM-DD/<bundle>
           DATE_PREFIX=${TIMESTAMP%_*}  # extract YYYY-MM-DD
@@ -87,11 +127,19 @@ jobs:
 
       - name: Upload workflows backup to S3
         if: steps.export-workflows.outcome == 'success'
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
           TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
           WORKFLOWS_ARCHIVE="${{ steps.export-workflows.outputs.workflows_archive }}"
           DATE_PREFIX=${TIMESTAMP%_*}
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          
+          # Validate bucket name is set
+          if [ -z "${BACKUP_S3_BUCKET}" ] || [ "${BACKUP_S3_BUCKET}" = "" ]; then
+            echo "❌ ERROR: BACKUP_S3_BUCKET environment variable is not set"
+            exit 1
+          fi
           
           S3_KEY="${REPO_NAME}/workflows-backups/${DATE_PREFIX}/${WORKFLOWS_ARCHIVE}"
           
@@ -100,10 +148,18 @@ jobs:
           echo "✅ Workflows backup uploaded"
 
       - name: Create backup manifest
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
           TIMESTAMP="${{ steps.create_bundle.outputs.timestamp }}"
           DATE_PREFIX=${TIMESTAMP%_*}
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          
+          # Validate bucket name is set
+          if [ -z "${BACKUP_S3_BUCKET}" ] || [ "${BACKUP_S3_BUCKET}" = "" ]; then
+            echo "❌ ERROR: BACKUP_S3_BUCKET environment variable is not set"
+            exit 1
+          fi
           
           cat > backup-manifest.json << EOF
           {
@@ -124,9 +180,17 @@ jobs:
           echo "✅ Backup manifest created"
 
       - name: Cleanup old backups (retention policy)
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
           RETENTION_DAYS=90  # Keep backups for 90 days
+          
+          # Validate bucket name is set
+          if [ -z "${BACKUP_S3_BUCKET}" ] || [ "${BACKUP_S3_BUCKET}" = "" ]; then
+            echo "❌ ERROR: BACKUP_S3_BUCKET environment variable is not set"
+            exit 1
+          fi
           
           echo "Cleaning up backups older than ${RETENTION_DAYS} days..."
           aws s3 ls "s3://${BACKUP_S3_BUCKET}/${REPO_NAME}/" --recursive | while read -r line; do
