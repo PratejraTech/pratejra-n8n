@@ -1,0 +1,18 @@
+# Purpose: Agent action log for automated context snapshots and header enforcement
+# Created/Updated: 2025-12-17 06:39
+# Agent: GPT-5.2
+
+[2025-12-17_06-39-03] created docker/docker-compose.n8n.postgres.yaml
+[2025-12-17_06-39-03] created docker/n8n.postgres.env.example
+[2025-12-17_06-39-03] created docs/RUNTIME_COMPOSE_POSTGRES.md
+[2025-12-17_06-39-03] snapshot .agents/contexts/2025-12-17_06-39-03/{docker,docs}/...
+[2025-12-17_08-46-45] created/updated ops/scripts/n8n_gitops.py
+[2025-12-17_08-46-45] created ops/scripts/n8n_gitops.sh
+[2025-12-17_08-46-45] created docs/GITOPS_WORKFLOWS.md
+[2025-12-17_08-46-45] snapshot .agents/contexts/2025-12-17_08-46-45/{ops/scripts,docs}/...
+[2025-12-17_08-47-40] created ops/scripts/backup_postgres_to_s3.sh
+[2025-12-17_08-47-40] created docker/docker-compose.backup-postgres.yaml
+[2025-12-17_08-47-40] created docs/BACKUPS_S3_LAYOUT.md
+[2025-12-17_08-47-40] snapshot .agents/contexts/2025-12-17_08-47-40/{ops/scripts,docker,docs}/...
+[2025-12-17_08-48-29] created ops/backups/restore_runbook_n8n_postgres.md
+[2025-12-17_08-48-29] snapshot .agents/contexts/2025-12-17_08-48-29/ops/backups/...

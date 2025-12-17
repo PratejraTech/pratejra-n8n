@@ -1,0 +1,35 @@
+# Purpose: Optional companion Compose service for scheduled Postgres backups to S3 (runs on the same host)
+# Created/Updated: 2025-12-17 00:00
+# Agent: GPT-5.2
+
+version: "3.8"
+
+services:
+  postgres-backup:
+    image: amazon/aws-cli:2.17.57
+    container_name: n8n-postgres-backup
+    restart: unless-stopped
+    environment:
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-pratejra-n8n-automation-31415}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-pratejra-automation-hub/postgres-backups}
+
+      # Postgres connection (point at the 'postgres' service if running in same compose network)
+      PGHOST: ${PGHOST:-postgres}
+      PGPORT: ${PGPORT:-5432}
+      PGDATABASE: ${PGDATABASE:-n8n}
+      PGUSER: ${PGUSER:-n8n}
+      PGPASSWORD: ${PGPASSWORD:-change-me}
+    volumes:
+      - ../ops/scripts/backup_postgres_to_s3.sh:/backup_postgres_to_s3.sh:ro
+    entrypoint: ["/bin/sh", "-lc"]
+    command: >
+      apk add --no-cache postgresql-client &&
+      chmod +x /backup_postgres_to_s3.sh &&
+      echo "Starting backup loop (every 24h)..." &&
+      while true; do
+        /backup_postgres_to_s3.sh && echo "Backup OK" || echo "Backup FAILED";
+        sleep 86400;
+      done
+
+
