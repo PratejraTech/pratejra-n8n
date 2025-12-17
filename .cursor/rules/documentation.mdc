@@ -1,0 +1,57 @@
+---
+alwaysApply: false
+---
+/*
+ * Purpose: Rules for documenting Automation Hub endpoints (dev/prod portability)
+ * Created/Updated: 2025-11-20 12:17
+ * Agent: Init Agent
+ */
+
+# Documentation Rule – Automation Hub Endpoints
+
+## Scope
+- All API endpoints and workflow integration points within the automation platform **must** be documented in a portable, markdown format.
+- Documentation must work for both development and production deployments, and be easily accessible across environments.
+
+## Requirements
+
+1. **Universal Format:**
+   - Endpoint documentation must be in standard markdown, saved under `docs/` or as specified in `architecture.mdc`.
+   - Each documented endpoint should include:
+     - Route/endpoint path
+     - HTTP method(s)
+     - Request/response schemas (link to schema files in `shared/schemas/`)
+     - Purpose/side effects
+     - Example usage (via Bun-powered scripts or curl)
+     - Auth requirements
+     - Versioning and change history
+
+2. **Dev/Prod Portability:**
+   - Avoid absolute URLs; reference endpoints relative to environment variables, e.g., `/$API_BASE/route`.
+   - All environment/config distinctions must be noted in a "**Deployment Notes**" section per endpoint.
+   - If an endpoint only exists in some environments, document its conditions explicitly.
+
+3. **Tooling and Automation:**
+   - Use [Bun](https://bun.sh/) scripts for endpoint documentation generation, linting, and verification.
+   - Scripts should be portable and invoked as: `bun scripts/generate_docs.ts`. 
+   - All automated updates or generated docs must be reflected in `.agents/tasks/bridge.md` for audit/state consistency.
+
+4. **State Tracking:**
+   - All documentation changes, additions or removals are to be logged/linked in `.agents/tasks/bridge.md`.
+   - Documented endpoints must reference the active workflow or task implementing/supporting the endpoint.
+
+5. **Comprehensiveness:**
+   - Each exposed endpoint & integration must be described: no undocumented routes may exist in dev or prod branches.
+   - Each markdown document must include:
+     - File header with: purpose, author, date, and deployment compatibility notes.
+
+## Enforcement
+
+- CI will fail if:
+  - Any endpoint/workflow is present without documentation.
+  - Documentation omits required fields above.
+- QA_AGENT verifies documentation completeness at each milestone before phase closure.
+
+---
+::endRule
+
