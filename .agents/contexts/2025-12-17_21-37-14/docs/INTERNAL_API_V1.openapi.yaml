@@ -1,0 +1,153 @@
+# Purpose: Generated OpenAPI 3.1 specification for Automation Hub Internal API v1
+# Created/Updated: 2025-12-17
+# Agent: BACKEND_AGENT
+#
+# Source of truth: docs/internal_api_v1.contracts.yaml
+openapi: 3.1.0
+jsonSchemaDialect: http://json-schema.org/draft-07/schema#
+info:
+  title: Automation Hub Internal API
+  version: v1
+  description: Generated from docs/internal_api_v1.contracts.yaml
+servers:
+- url: http://localhost:5678
+  description: Local (default n8n)
+- url: https://n8n.automation-hub.example.com
+  description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /internal/api/v1/events/{event_type}:
+    post:
+      operationId: post_event_by_type
+      summary: Trigger a workflow based on event type.
+      description: Accepts an event envelope and triggers the workflow registered
+        for the event type.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Event accepted and workflow triggered.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.event_accepted.response.schema.json
+              examples:
+                response_200:
+                  value:
+                    status: accepted
+                    event_id: 550e8400-e29b-41d4-a716-446655440000
+                    workflow_id: workflow-123
+                    correlation_id: corr-12345
+                    timestamp: '2025-11-20T12:00:00Z'
+        '400':
+          description: Invalid event payload.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.error.response.schema.json
+              examples:
+                response_400:
+                  value:
+                    status: error
+                    error: validation_failed
+                    message: Payload validation failed
+                    errors:
+                    - 'Missing required field: email'
+                    - Invalid email format
+        '401':
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.error.response.schema.json
+              examples:
+                response_401:
+                  value:
+                    status: error
+                    error: unauthorized
+                    message: Invalid API key
+        '404':
+          description: Event type not found.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.error.response.schema.json
+              examples:
+                response_404:
+                  value:
+                    status: error
+                    error: event_type_not_found
+                    message: 'No workflow registered for event type: contact.created'
+        '500':
+          description: Unexpected workflow or server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.error.response.schema.json
+              examples: {}
+      parameters:
+      - name: event_type
+        in: path
+        required: true
+        description: Event type identifier (e.g., contact.created, infra.deploy.started).
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../shared/schemas/event.schema.json
+            examples:
+              request:
+                value:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  type: contact.created
+                  source: backend
+                  env: dev
+                  timestamp: '2025-11-20T12:00:00Z'
+                  correlation_id: corr-12345
+                  payload:
+                    email: user@example.com
+                    first_name: John
+                    last_name: Doe
+                  meta:
+                    version: v1
+                    tags:
+                    - crm
+                    - lead
+  /internal/api/v1/health:
+    get:
+      operationId: get_health
+      summary: Health check endpoint for the internal API.
+      description: Returns API version and key dependency connectivity status.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Health status.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.health.response.schema.json
+              examples:
+                response_200:
+                  value:
+                    status: ok
+                    version: v1
+                    timestamp: '2025-11-20T12:00:00Z'
+                    services:
+                      n8n: connected
+                      database: connected
+                      prometheus: connected
+        '401':
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: ../shared/schemas/internal_api_v1.error.response.schema.json
+              examples: {}

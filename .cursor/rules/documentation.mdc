@@ -1,5 +1,8 @@
 ---
+description: "Documentation governance rules for Automation Hub endpoints and integration points"
+globs: ["docs/**", "workflows/**", "shared/**"]
 alwaysApply: false
+version: "1.0.0"
 ---
 /*
  * Purpose: Rules for documenting Automation Hub endpoints (dev/prod portability)
