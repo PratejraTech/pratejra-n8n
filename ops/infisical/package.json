@@ -1,0 +1,22 @@
+{
+  "name": "@automation-hub/infisical-secrets-bootstrap",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generate n8n docker env files from Infisical (prod) or dotenv-vault (local).",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "n8n-secrets-env": "./bin/secrets-env.mjs"
+  },
+  "scripts": {
+    "secrets:env": "node ./bin/secrets-env.mjs",
+    "secrets:env:help": "node ./bin/secrets-env.mjs --help"
+  },
+  "dependencies": {
+    "@infisical/sdk": "^4.0.6",
+    "dotenv": "^17.2.3"
+  }
+}
