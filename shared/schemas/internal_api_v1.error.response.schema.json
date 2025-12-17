@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/internal_api_v1.error.response.schema.json",
+  "title": "Internal API v1 Error Response Schema v1",
+  "description": "Standard error response envelope for Internal API v1 endpoints (validation, auth, not found, and server errors).",
+  "type": "object",
+  "required": ["status", "error", "message"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "description": "Response status indicator.",
+      "const": "error"
+    },
+    "error": {
+      "$ref": "common.schema.json#/definitions/error_code",
+      "description": "Stable machine-readable error code."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message.",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "errors": {
+      "type": "array",
+      "description": "Optional list of detailed validation or processing errors.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "correlation_id": {
+      "type": ["string", "null"],
+      "description": "Correlation ID for tracing (when available).",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/definitions/iso_datetime",
+      "description": "ISO 8601 timestamp when the error response was generated."
+    }
+  },
+  "additionalProperties": false
+}
+
+

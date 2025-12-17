@@ -1,0 +1,40 @@
+# Purpose: Overlay catalog for webhook-system workflows (central dispatch + helpers)
+# Created/Updated: 2025-12-17 00:00
+# Agent: GPT-5.2
+#
+# This file intentionally exists as an overlay so we do not edit the primary
+# workflows catalog (workflows/metadata/workflows_catalog.yaml).
+#
+# Use ops/scripts/n8n_gitops_webhooks.py to export/import/drift-check these workflows.
+#
+
+catalog:
+  version: "1.0.0"
+  generated_at: "2025-12-17T00:00:00Z"
+  total_workflows: 2
+
+  workflows:
+    - id: "webhook_dispatch"
+      name: "Webhook Dispatch"
+      domain: "shared"
+      description: "Central webhook dispatcher that normalizes payloads into Event Schema v1, validates registry, and routes to worker workflows."
+      version: "1.0.0"
+      status: "active"
+      file_path: "workflows/domains/shared/webhook_dispatch.json"
+      endpoints:
+        - "/webhook/dispatch"
+      dependencies: ["log_event", "error_central_handler"]
+      tags: ["webhooks", "dispatch", "platform", "critical-path"]
+
+    - id: "webhook_worker_template"
+      name: "Webhook Worker Template"
+      domain: "shared"
+      description: "Template workflow for event workers executed by Webhook Dispatch."
+      version: "1.0.0"
+      status: "draft"
+      file_path: "workflows/domains/shared/webhook_worker_template.json"
+      endpoints: []
+      dependencies: []
+      tags: ["webhooks", "template"]
+
+

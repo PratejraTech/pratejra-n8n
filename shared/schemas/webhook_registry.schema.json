@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/webhook_registry.schema.json",
+  "title": "Webhook Registry Schema v1",
+  "description": "Schema for a webhook_registry row used by the Central Webhook Dispatch routing system",
+  "type": "object",
+  "required": ["event_type", "target_workflow_logical_id", "target_workflow_name", "is_active", "required_payload_fields"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "description": "Event type used for routing (must align with event.schema.json `type` pattern)",
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9]+)+$",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "target_workflow_logical_id": {
+      "type": "string",
+      "description": "Repo logical workflow ID (typically matches workflows_catalog.yaml `id`)",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "target_workflow_name": {
+      "type": "string",
+      "description": "n8n workflow name (stable under GitOps upsert-by-name)",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "cached_n8n_workflow_id": {
+      "type": ["string", "null"],
+      "description": "Optional cached n8n workflow id (not relied on for correctness)",
+      "maxLength": 50
+    },
+    "description": {
+      "type": ["string", "null"],
+      "description": "Human-readable description of this event route"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Whether the event route is active"
+    },
+    "payload_schema_type": {
+      "type": ["string", "null"],
+      "description": "Optional schema type for payload validation (e.g., contact, infra_deploy)",
+      "maxLength": 50
+    },
+    "required_payload_fields": {
+      "type": "array",
+      "description": "Array of required field paths (dot-paths) enforced against event.payload",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "created_at": {
+      "type": ["string", "null"],
+      "description": "Creation timestamp (database-managed)",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "description": "Update timestamp (database-managed)",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}
+
+

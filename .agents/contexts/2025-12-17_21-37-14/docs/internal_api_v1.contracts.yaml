@@ -1,0 +1,109 @@
+# Purpose: Single source of truth for Internal API v1 endpoint contracts (schemas, responses, examples)
+# Created/Updated: 2025-12-17
+# Agent: BACKEND_AGENT
+api:
+  title: "Automation Hub Internal API"
+  version: "v1"
+  base_path: "/internal/api/v1"
+  auth:
+    scheme: "bearer"
+    header: "Authorization"
+    value_format: "Bearer {api_key}"
+    description: "All requests require an API key via HTTP Bearer auth."
+
+endpoints:
+  - id: "post_event_by_type"
+    method: "POST"
+    path: "/internal/api/v1/events/{event_type}"
+    summary: "Trigger a workflow based on event type."
+    description: "Accepts an event envelope and triggers the workflow registered for the event type."
+    path_params:
+      event_type:
+        type: "string"
+        required: true
+        description: "Event type identifier (e.g., contact.created, infra.deploy.started)."
+    request:
+      content_type: "application/json"
+      schema_ref: "shared/schemas/event.schema.json"
+    responses:
+      "200":
+        description: "Event accepted and workflow triggered."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.event_accepted.response.schema.json"
+      "400":
+        description: "Invalid event payload."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.error.response.schema.json"
+      "401":
+        description: "Invalid or missing API key."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.error.response.schema.json"
+      "404":
+        description: "Event type not found."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.error.response.schema.json"
+      "500":
+        description: "Unexpected workflow or server error."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.error.response.schema.json"
+    examples:
+      request:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        type: "contact.created"
+        source: "backend"
+        env: "dev"
+        timestamp: "2025-11-20T12:00:00Z"
+        correlation_id: "corr-12345"
+        payload:
+          email: "user@example.com"
+          first_name: "John"
+          last_name: "Doe"
+        meta:
+          version: "v1"
+          tags: ["crm", "lead"]
+      response_200:
+        status: "accepted"
+        event_id: "550e8400-e29b-41d4-a716-446655440000"
+        workflow_id: "workflow-123"
+        correlation_id: "corr-12345"
+        timestamp: "2025-11-20T12:00:00Z"
+      response_400:
+        status: "error"
+        error: "validation_failed"
+        message: "Payload validation failed"
+        errors:
+          - "Missing required field: email"
+          - "Invalid email format"
+      response_401:
+        status: "error"
+        error: "unauthorized"
+        message: "Invalid API key"
+      response_404:
+        status: "error"
+        error: "event_type_not_found"
+        message: "No workflow registered for event type: contact.created"
+
+  - id: "get_health"
+    method: "GET"
+    path: "/internal/api/v1/health"
+    summary: "Health check endpoint for the internal API."
+    description: "Returns API version and key dependency connectivity status."
+    responses:
+      "200":
+        description: "Health status."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.health.response.schema.json"
+      "401":
+        description: "Invalid or missing API key."
+        content_type: "application/json"
+        schema_ref: "shared/schemas/internal_api_v1.error.response.schema.json"
+    examples:
+      response_200:
+        status: "ok"
+        version: "v1"
+        timestamp: "2025-11-20T12:00:00Z"
+        services:
+          n8n: "connected"
+          database: "connected"
+          prometheus: "connected"
+

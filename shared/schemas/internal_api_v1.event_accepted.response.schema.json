@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/internal_api_v1.event_accepted.response.schema.json",
+  "title": "Internal API v1 Event Accepted Response Schema v1",
+  "description": "Schema for the 200 OK response returned by Internal API v1 when an event is accepted and workflow triggering begins.",
+  "type": "object",
+  "required": ["status", "event_id", "workflow_id", "timestamp"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "description": "Response status indicator.",
+      "const": "accepted"
+    },
+    "event_id": {
+      "$ref": "common.schema.json#/definitions/uuid",
+      "description": "The accepted event's ID."
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Identifier for the workflow triggered (implementation-specific).",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "correlation_id": {
+      "type": ["string", "null"],
+      "description": "Correlation ID for tracing across systems (may be generated if missing from request).",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/definitions/iso_datetime",
+      "description": "ISO 8601 timestamp when the event was accepted."
+    }
+  },
+  "additionalProperties": false
+}
+
+
