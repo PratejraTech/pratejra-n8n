@@ -1,0 +1,173 @@
+{
+  "_metadata": {
+    "purpose": "Central webhook dispatcher (POST /webhook/dispatch) that normalizes inbound requests into Event Schema v1 and routes via webhook_registry",
+    "created": "2025-12-17 00:00",
+    "agent": "GPT-5.2",
+    "id": "webhook_dispatch",
+    "version": "1.0.0",
+    "domain": "shared",
+    "description": "Central webhook dispatcher that validates registry and routes to worker workflows.",
+    "steps": [
+      "Webhook trigger (POST /dispatch) + auth",
+      "Normalize to Event Schema v1 (hybrid input supported)",
+      "Lookup webhook_registry in Postgres by event_type",
+      "Validate required_payload_fields (dot-paths)",
+      "Execute worker workflow (async)",
+      "Respond 202 queued"
+    ]
+  },
+  "name": "Webhook Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "dispatch",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "bfa58b68-6d30-4d11-b4a3-4d55cfd6b8ae",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Auth + normalize (hybrid contract) into Event Schema v1.\n// NOTE: This is a minimal, import-safe implementation. Customize in dev n8n UI and export via ops/scripts/n8n_gitops_webhooks.py.\n\nconst headers = ($json.headers || $json.header || $json) || {};\nconst auth = headers.authorization || headers.Authorization;\n\nif (!auth || !String(auth).startsWith('Bearer ')) {\n  const err = new Error('Unauthorized: missing Authorization: Bearer <token>');\n  err.statusCode = 401;\n  throw err;\n}\n\nconst body = ($json.body && typeof $json.body === 'object') ? $json.body : $json;\nconst query = ($json.query && typeof $json.query === 'object') ? $json.query : {};\n\nfunction nowIso() { return new Date().toISOString(); }\nfunction makeCorrelationId() { return `corr-${Date.now()}-${Math.random().toString(16).slice(2)}`; }\n\nfunction looksLikeEventV1(b) {\n  return b && typeof b === 'object' && typeof b.type === 'string' && typeof b.source === 'string' && typeof b.env === 'string' && typeof b.timestamp === 'string' && b.payload && typeof b.payload === 'object';\n}\n\nlet event;\nif (looksLikeEventV1(body)) {\n  event = { ...body };\n} else {\n  const type = String(body.event_type ?? query.event_type ?? body.event ?? query.event ?? '').trim();\n  const meta = body.meta ?? body.metadata ?? undefined;\n  const payload = body.payload ?? body.data ?? {};\n\n  event = {\n    id: String(body.id ?? `${Date.now()}`),\n    type,\n    source: String(body.source ?? meta?.source ?? 'external'),\n    env: String(body.env ?? meta?.env ?? 'prod'),\n    timestamp: String(body.timestamp ?? meta?.timestamp ?? nowIso()),\n    correlation_id: String(body.correlation_id ?? meta?.correlation_id ?? makeCorrelationId()),\n    payload: (payload && typeof payload === 'object') ? payload : {},\n    meta,\n  };\n}\n\nreturn [{ json: event }];"
+      },
+      "id": "f8ae20df-76e6-4f41-818e-0bd2d7b7a42b",
+      "name": "Auth+Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.webhook_registry WHERE event_type = $1 AND is_active = true",
+        "additionalFields": {
+          "queryParams": "={{ [$json.type] }}"
+        }
+      },
+      "id": "2c1f89d5-4c0b-4e6b-8b1f-7dc3b1e2dc09",
+      "name": "Lookup Registry",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate registry result + required_payload_fields against event.payload.\n\nconst event = $json;\nconst rows = $input.all().map(i => i.json);\n\n// In n8n Postgres node, results are typically output as items where json is each row.\n// We expect to be running this node with the Postgres node output, so $json is a registry row.\n// To keep import-safe, handle both shapes.\n\nconst registry = $json && $json.event_type ? $json : (rows[0] && rows[0].event_type ? rows[0] : null);\n\nif (!registry) {\n  const err = new Error(`Unknown or inactive event type: ${event.type}`);\n  err.statusCode = 404;\n  throw err;\n}\n\nconst required = Array.isArray(registry.required_payload_fields)\n  ? registry.required_payload_fields\n  : (typeof registry.required_payload_fields === 'string' ? JSON.parse(registry.required_payload_fields) : []);\n\nfunction getPath(obj, path) {\n  return String(path).split('.').reduce((acc, k) => (acc && typeof acc === 'object' ? acc[k] : undefined), obj);\n}\n\nconst missing = [];\nfor (const p of required) {\n  const v = getPath(event.payload, p);\n  if (v === undefined || v === null || v === '') missing.push(String(p));\n}\n\nif (missing.length) {\n  const err = new Error(`Missing required payload fields: ${missing.join(', ')}`);\n  err.statusCode = 400;\n  throw err;\n}\n\n// Merge event + registry for downstream routing.\nreturn [{ json: { ...event, registry } }];"
+      },
+      "id": "d8a2f1c1-2c7f-4a18-a31f-b71a0f02ef21",
+      "name": "Validate Required Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "={{ $json.registry.cached_n8n_workflow_id }}",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "b5521207-747a-4f71-bc35-6b460b6559a9",
+      "name": "Execute Worker (async)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 202,
+        "responseBody": "={{ { status: 'queued', type: $json.type, correlation_id: $json.correlation_id } }}"
+      },
+      "id": "fdaf9f9d-7fdc-4dcb-b3d0-20c4c0330a32",
+      "name": "Respond Queued",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        600,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Auth+Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auth+Normalize": {
+      "main": [
+        [
+          {
+            "node": "Lookup Registry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Registry": {
+      "main": [
+        [
+          {
+            "node": "Validate Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Execute Worker (async)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Worker (async)": {
+      "main": [
+        [
+          {
+            "node": "Respond Queued",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null
+}
+
+

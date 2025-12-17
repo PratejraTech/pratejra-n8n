@@ -16,3 +16,8 @@
 [2025-12-17_08-47-40] snapshot .agents/contexts/2025-12-17_08-47-40/{ops/scripts,docker,docs}/...
 [2025-12-17_08-48-29] created ops/backups/restore_runbook_n8n_postgres.md
 [2025-12-17_08-48-29] snapshot .agents/contexts/2025-12-17_08-48-29/ops/backups/...
+[2025-12-17T11:07:14Z] Agent: BACKEND_AGENT
+Action: Generated Internal API v1 contracts artifacts + schemas
+Snapshot: .agents/contexts/2025-12-17_21-37-14
+Files: docs/internal_api_v1.contracts.yaml, docs/INTERNAL_API_V1.openapi.yaml, docs/INTERNAL_API_V1_CONTRACTS.md, shared/schemas/common.schema.json, shared/schemas/internal_api_v1.event_accepted.response.schema.json, shared/schemas/internal_api_v1.error.response.schema.json, shared/schemas/internal_api_v1.health.response.schema.json, ops/scripts/generate_internal_api_v1_contracts.py, tests/test_internal_api_openapi.py
+

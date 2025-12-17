@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://automation-hub.example.com/schemas/v1/internal_api_v1.health.response.schema.json",
+  "title": "Internal API v1 Health Response Schema v1",
+  "description": "Schema for the GET /internal/api/v1/health response.",
+  "type": "object",
+  "required": ["status", "version", "timestamp", "services"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "description": "Health status indicator.",
+      "const": "ok"
+    },
+    "version": {
+      "type": "string",
+      "description": "API version string.",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/definitions/iso_datetime",
+      "description": "ISO 8601 timestamp when the health response was generated."
+    },
+    "services": {
+      "type": "object",
+      "description": "Map of dependency names to connectivity status.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
+

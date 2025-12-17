@@ -1,0 +1,61 @@
+{
+  "_metadata": {
+    "purpose": "Template for worker workflows executed by Webhook Dispatch (no public webhook; executed internally)",
+    "created": "2025-12-17 00:00",
+    "agent": "GPT-5.2",
+    "id": "webhook_worker_template",
+    "version": "1.0.0",
+    "domain": "shared",
+    "description": "Template for internal worker workflows that process normalized Event Schema v1 payloads.",
+    "steps": [
+      "Start node receives input from parent Execute Workflow node",
+      "Validate payload (optionally using shared/js_snippets/validate_payload.js)",
+      "Domain logic",
+      "Log event + error handling"
+    ]
+  },
+  "name": "Webhook Worker Template",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c5b9e06f-0bc4-4b7a-a040-283a2b93eb20",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input expectation (from dispatcher):\n// $json.type, $json.correlation_id, $json.payload\n// Implement worker logic here.\nreturn items;"
+      },
+      "id": "a9b1bdf7-b6af-4686-b0c9-cd19c37c2e6f",
+      "name": "Worker Logic (placeholder)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Worker Logic (placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null
+}
+
+
