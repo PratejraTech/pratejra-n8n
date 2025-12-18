@@ -202,16 +202,74 @@ aws secretsmanager get-secret-value \
 
 ### PostgreSQL (Recommended for Production)
 
-**Connection String:**
-```
-postgresql://{user}:{password}@{host}:5432/{database}
-```
+For comprehensive PostgreSQL setup, configuration, and operations, see:
+- **Full Guide:** `docs/POSTGRES_SETUP.md`
 
-**Credentials:** Stored in AWS Secrets Manager
+**Quick Reference:**
+- Connection String: `postgresql://{user}:{password}@{host}:5432/{database}`
+- Credentials: Stored in AWS Secrets Manager
+- Development: See `docs/RUNTIME_COMPOSE_POSTGRES.md` for Docker Compose setup
 
 ### SQLite (Development Only)
 
 For development, n8n can use SQLite (default). Production should use PostgreSQL.
+
+For development, n8n can use SQLite (default). Production should use PostgreSQL.
+
+## Queue Mode Configuration
+
+n8n supports queue mode for horizontal scaling and better workflow execution management. Queue mode uses Redis (Bull queue) to decouple webhook processing from workflow execution.
+
+### Enabling Queue Mode
+
+Set the following environment variables to enable queue mode:
+
+```bash
+EXECUTIONS_MODE=queue
+QUEUE_BULL_REDIS_HOST=redis-host
+QUEUE_BULL_REDIS_PORT=6379
+QUEUE_BULL_REDIS_DB=0
+QUEUE_BULL_REDIS_CONNECTION_TIMEOUT=10000
+```
+
+**Optional Redis Configuration:**
+```bash
+QUEUE_BULL_REDIS_PASSWORD=your-redis-password
+```
+
+### Architecture
+
+In queue mode:
+- **Main instance:** Handles webhooks, API requests, and queues workflow executions
+- **Worker instances:** Process queued workflow executions from Redis
+- **Redis:** Stores workflow execution jobs using Bull queue
+
+### Worker Deployment
+
+Worker instances require:
+- Same database configuration as main instance
+- Same Redis queue configuration
+- Command: `worker` (instead of default n8n command)
+
+Example Docker Compose worker service:
+```yaml
+n8n-worker:
+  image: n8nio/n8n:1.84.2
+  command: worker
+  environment:
+    EXECUTIONS_MODE: queue
+    QUEUE_BULL_REDIS_HOST: redis
+    # ... same config as main instance
+```
+
+### Scaling Workers
+
+Scale worker instances independently based on load:
+- Start with 1-2 workers
+- Monitor queue depth and processing time
+- Scale up/down as needed
+
+For detailed queue mode setup, see: `docs/REDIS_QUEUE_CONFIGURATION.md`
 
 ## Backup Configuration
 

@@ -93,3 +93,19 @@ features:
   slack_notifications: true
   prometheus_metrics: true
   workflow_backups: true
+  queue_mode: true
+
+# Redis Queue Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  # Password stored in AWS Secrets Manager
+  # Reference: aws secretsmanager get-secret-value --secret-id automation-hub/dev/redis-password
+  password_secret_arn: "arn:aws:secretsmanager:REGION:ACCOUNT:secret:automation-hub/dev/redis-password"
+  database: 0
+  connection_timeout: 10000
+  # Queue mode configuration
+  queue_mode:
+    enabled: true
+    queue_name: "n8n"
+    execution_mode: "queue"
