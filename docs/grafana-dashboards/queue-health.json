@@ -1,0 +1,226 @@
+{
+  "dashboard": {
+    "title": "Automation Hub - Queue Health",
+    "tags": ["automation-hub", "queue", "redis", "health"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Queue Depth by Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "n8n_redis_queue_depth{status=\"waiting\"}",
+            "legendFormat": "Waiting"
+          },
+          {
+            "expr": "n8n_redis_queue_depth{status=\"active\"}",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "n8n_redis_queue_depth{status=\"delayed\"}",
+            "legendFormat": "Delayed"
+          },
+          {
+            "expr": "n8n_redis_queue_depth{status=\"paused\"}",
+            "legendFormat": "Paused"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Failed Jobs",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "n8n_redis_queue_depth{status=\"failed\"}",
+            "legendFormat": "Failed"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Redis Connection Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "n8n_redis_connection_status",
+            "legendFormat": "{{host}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": {"text": "DOWN"},
+                  "1": {"text": "UP"}
+                }
+              }
+            ]
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Redis Memory Usage",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "n8n_redis_memory_usage_bytes",
+            "legendFormat": "Memory"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 268435456, "color": "yellow"},
+                {"value": 536870912, "color": "red"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Queue Processing Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(n8n_redis_queue_processing_time_seconds_sum[5m]) / rate(n8n_redis_queue_processing_time_seconds_count[5m])",
+            "legendFormat": "Avg Processing Time"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(n8n_redis_queue_processing_time_seconds_bucket[5m]))",
+            "legendFormat": "P95 Processing Time"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(n8n_redis_queue_processing_time_seconds_bucket[5m]))",
+            "legendFormat": "P99 Processing Time"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "min": 0
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+      },
+      {
+        "id": 6,
+        "title": "Queue Throughput",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(n8n_redis_queue_jobs_total{status=\"completed\"}[5m])",
+            "legendFormat": "Completed/sec"
+          },
+          {
+            "expr": "rate(n8n_redis_queue_jobs_total{status=\"failed\"}[5m])",
+            "legendFormat": "Failed/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "min": 0
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      },
+      {
+        "id": 7,
+        "title": "Total Queue Depth",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(n8n_redis_queue_depth{status=~\"waiting|active|delayed\"})",
+            "legendFormat": "Total Jobs"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 100, "color": "yellow"},
+                {"value": 1000, "color": "red"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8}
+      },
+      {
+        "id": 8,
+        "title": "Queue Health Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(rate(n8n_redis_queue_jobs_total{status=\"completed\"}[5m]) / (rate(n8n_redis_queue_jobs_total{status=\"completed\"}[5m]) + rate(n8n_redis_queue_jobs_total{status=\"failed\"}[5m]))) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8}
+      }
+    ]
+  }
+}
+

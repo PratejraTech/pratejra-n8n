@@ -198,6 +198,53 @@ The `log_event` workflow:
 4. **Export on critical events:** Success, failure, and key milestones
 5. **Handle export failures:** Metrics export should not block workflow execution
 
+## Queue Metrics
+
+### n8n Built-in Queue Metrics
+
+When `N8N_METRICS_INCLUDE_QUEUE_METRICS=true` is set, n8n exports queue-specific metrics at `/metrics`:
+
+- `n8n_queue_jobs_total{status}` - Total jobs by status (waiting, active, completed, failed)
+- `n8n_queue_processing_time_seconds` - Queue processing time histogram
+- Worker-related metrics
+
+**Configuration:**
+```yaml
+N8N_METRICS: "true"
+N8N_METRICS_INCLUDE_QUEUE_METRICS: "true"
+```
+
+### Supplemental Redis Queue Metrics
+
+For deeper Redis-level observability, use the supplemental metrics exporter:
+
+**Script:** `ops/scripts/redis_queue_metrics_exporter.py`
+
+**Metrics:**
+- `n8n_redis_queue_depth{queue,status}` - Queue depth by status (waiting, active, delayed, paused)
+- `n8n_redis_queue_jobs_total{queue,status}` - Job counts by status
+- `n8n_redis_connection_status{host}` - Redis connection health (1=up, 0=down)
+- `n8n_redis_memory_usage_bytes` - Redis memory usage
+
+**Usage:**
+```bash
+# Expose HTTP endpoint for Prometheus scraping
+EXPOSE_HTTP_PORT=9090 python ops/scripts/redis_queue_metrics_exporter.py
+
+# Or push to Prometheus Push Gateway
+PROMETHEUS_PUSH_GATEWAY=http://pushgateway:9091 python ops/scripts/redis_queue_metrics_exporter.py
+```
+
+**Grafana Dashboard:**
+- Import `docs/grafana-dashboards/queue-health.json` for queue health visualization
+- Includes: queue depth, processing time, failure rates, Redis health
+
+**Prometheus Alerts:**
+- See `docs/prometheus-alerts/queue-alerts.yml` for alerting rules
+- Alerts include: high queue depth, slow processing, high failure rate, Redis connection down
+
+For detailed queue configuration, see `docs/REDIS_QUEUE_CONFIGURATION.md`.
+
 ## Troubleshooting
 
 ### Metrics Not Appearing

@@ -39,3 +39,10 @@ curl -fsS http://localhost:5678/healthz
 ## Deployment notes
 - Default binding is **localhost-only**. To expose externally, set `N8N_BIND_ADDR=0.0.0.0` and protect the UI with auth + network controls.
 
+
+
+## Additional Resources
+
+For comprehensive PostgreSQL setup including production deployment, performance tuning, security, and troubleshooting, see:
+- **Full Guide:** `docs/POSTGRES_SETUP.md`
+
