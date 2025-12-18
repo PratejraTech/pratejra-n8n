@@ -453,6 +453,158 @@ Key metrics to monitor:
 - **Worker utilization:** CPU/memory usage per worker
 - **Redis memory:** Memory usage and eviction rate
 
+## Queue Metrics and Observability
+
+### n8n Built-in Metrics
+
+n8n exports Prometheus metrics at the `/metrics` endpoint when `N8N_METRICS_INCLUDE_QUEUE_METRICS=true` is set. These metrics include:
+
+- Queue job counts (waiting, active, completed, failed)
+- Processing times
+- Worker metrics
+
+**Configuration:**
+```yaml
+N8N_METRICS: "true"
+N8N_METRICS_INCLUDE_QUEUE_METRICS: "true"
+```
+
+### Supplemental Redis Metrics Exporter
+
+For deeper Redis-level observability, use the supplemental metrics exporter:
+
+**File:** `ops/scripts/redis_queue_metrics_exporter.py`
+
+**Metrics Exported:**
+- `n8n_redis_queue_depth{queue,status}` - Queue depth by status
+- `n8n_redis_connection_status{host}` - Redis connection health
+- `n8n_redis_memory_usage_bytes` - Redis memory usage
+
+**Usage:**
+```bash
+# Run as service (exposes HTTP endpoint)
+python ops/scripts/redis_queue_metrics_exporter.py
+
+# Or push to Prometheus Push Gateway
+PROMETHEUS_PUSH_GATEWAY=http://pushgateway:9091 python ops/scripts/redis_queue_metrics_exporter.py
+```
+
+**Grafana Dashboard:**
+- Import `docs/grafana-dashboards/queue-health.json` for queue health visualization
+
+**Prometheus Alerts:**
+- See `docs/prometheus-alerts/queue-alerts.yml` for alerting rules
+
+For more details, see `docs/PROMETHEUS_INTEGRATION.md`.
+
+## Dead Letter Queue (DLQ) Management
+
+### Overview
+
+The DLQ system provides automated retry logic with exponential backoff for failed jobs. Jobs that exceed maximum retry attempts are moved to a Dead Letter Queue for manual review and recovery.
+
+### Architecture
+
+```
+Failed Job → Retry Logic (Exponential Backoff) → Max Retries Exceeded → DLQ → Alert & Manual Recovery
+```
+
+### Configuration
+
+Configure retry and DLQ settings in environment config files:
+
+```yaml
+queue_retry:
+  enabled: true
+  max_attempts: 5
+  initial_delay_seconds: 1
+  max_delay_seconds: 300
+  backoff_multiplier: 2
+  retryable_errors:
+    - "ConnectionError"
+    - "TimeoutError"
+    - "RateLimitError"
+
+dlq:
+  enabled: true
+  max_size: 1000
+  alert_threshold: 100
+  retention_days: 30
+  notification_workflow: "notify_slack"
+```
+
+### DLQ Manager
+
+**File:** `ops/scripts/redis_queue_dlq_manager.py`
+
+Monitors failed jobs and implements retry logic:
+
+```bash
+# Run as continuous service
+python ops/scripts/redis_queue_dlq_manager.py
+
+# Process failed jobs once
+python ops/scripts/redis_queue_dlq_manager.py --once
+```
+
+**Features:**
+- Exponential backoff retry (configurable delays)
+- Automatic DLQ movement after max retries
+- Retry metadata tracking
+
+### DLQ Monitor
+
+**File:** `ops/scripts/redis_queue_dlq_monitor.py`
+
+Monitors DLQ size and sends alerts:
+
+```bash
+# Run as continuous service
+python ops/scripts/redis_queue_dlq_monitor.py
+
+# Check DLQ status
+python ops/scripts/redis_queue_dlq_monitor.py --status
+```
+
+**Features:**
+- DLQ size monitoring
+- Alert threshold detection
+- Integration with `notify_slack` workflow
+
+### DLQ Job Recovery
+
+**Workflow:** `workflows/domains/shared/dlq_job_recovery.json`
+
+n8n workflow for manual job recovery:
+- List DLQ jobs
+- Filter by workflow name, error type, date range
+- Replay selected jobs back to queue
+- Delete jobs from DLQ after successful replay
+
+**CLI Commands:**
+```bash
+# Check DLQ status
+python ops/scripts/test_redis_queue.py dlq-status
+
+# List DLQ jobs
+python ops/scripts/test_redis_queue.py dlq-list
+
+# Replay job from DLQ
+python ops/scripts/test_redis_queue.py dlq-replay --job-id job-123
+```
+
+### DLQ Schema
+
+**File:** `shared/schemas/dlq_job.schema.json`
+
+Defines the structure of DLQ job entries including:
+- Job ID and workflow name
+- Failure timestamps and retry count
+- Error message and type
+- Original payload for replay
+
+For troubleshooting, see `docs/RUNBOOKS.md` DLQ section.
+
 ## References
 
 - [n8n Queue Mode Documentation](https://docs.n8n.io/hosting/scaling/queue-mode/)
@@ -464,7 +616,14 @@ Key metrics to monitor:
 ## Related Documentation
 
 - `docs/N8N_CONFIGURATION.md` - General n8n configuration guide
+- `docs/PROMETHEUS_INTEGRATION.md` - Prometheus metrics integration
+- `docs/RUNBOOKS.md` - DLQ troubleshooting runbook
+- `docs/ERROR_HANDLING.md` - Queue retry logic
 - `docker/docker-compose.n8n.redis.yaml` - Docker Compose configuration
 - `docker/redis.conf` - Redis configuration file
 - `ops/scripts/test_redis_queue.py` - Queue monitoring script
+- `ops/scripts/redis_queue_metrics_exporter.py` - Metrics exporter
+- `ops/scripts/redis_queue_dlq_manager.py` - DLQ manager
+- `ops/scripts/redis_queue_dlq_monitor.py` - DLQ monitor
+
 

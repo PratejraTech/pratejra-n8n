@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dead Letter Queue Job Schema",
+  "description": "Schema for jobs that have exceeded maximum retry attempts and moved to DLQ",
+  "type": "object",
+  "required": [
+    "job_id",
+    "workflow_name",
+    "failed_at",
+    "retry_count",
+    "error_message",
+    "original_payload"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Unique identifier for the failed job"
+    },
+    "workflow_name": {
+      "type": "string",
+      "description": "Name of the n8n workflow that failed"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when job first failed"
+    },
+    "retry_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of retry attempts made before moving to DLQ"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message from the last failure"
+    },
+    "error_type": {
+      "type": "string",
+      "description": "Type/category of error (e.g., ConnectionError, TimeoutError, ValidationError)"
+    },
+    "original_payload": {
+      "type": "object",
+      "description": "Original job payload that failed"
+    },
+    "last_retry_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the last retry attempt"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Correlation ID for tracing across workflows"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the job"
+    }
+  }
+}
+

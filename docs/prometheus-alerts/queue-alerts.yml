@@ -1,0 +1,91 @@
+# Purpose: Prometheus alerting rules for n8n queue health monitoring
+# Created/Updated: 2025-01-27
+# Agent: BACKEND_AGENT
+
+groups:
+  - name: n8n_queue_alerts
+    interval: 30s
+    rules:
+      - alert: QueueDepthHigh
+        expr: sum(n8n_redis_queue_depth{status=~"waiting|active|delayed"}) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "High queue depth detected"
+          description: "Queue depth is {{ $value }} jobs (threshold: 1000) for more than 5 minutes"
+
+      - alert: QueueProcessingSlow
+        expr: |
+          (
+            rate(n8n_redis_queue_processing_time_seconds_sum[10m]) / 
+            rate(n8n_redis_queue_processing_time_seconds_count[10m])
+          ) > 60
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Slow queue processing detected"
+          description: "Average queue processing time is {{ $value }}s (threshold: 60s) for more than 10 minutes"
+
+      - alert: QueueFailureRateHigh
+        expr: |
+          (
+            rate(n8n_redis_queue_jobs_total{status="failed"}[5m]) /
+            (rate(n8n_redis_queue_jobs_total{status="completed"}[5m]) + rate(n8n_redis_queue_jobs_total{status="failed"}[5m]))
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "High queue failure rate detected"
+          description: "Queue failure rate is {{ $value | humanizePercentage }} (threshold: 10%) for more than 5 minutes"
+
+      - alert: RedisConnectionDown
+        expr: n8n_redis_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "Redis connection down"
+          description: "Redis connection status is DOWN for more than 1 minute"
+
+      - alert: WorkerCountZero
+        expr: count(n8n_redis_queue_depth{status="active"}) == 0 AND sum(n8n_redis_queue_depth{status="waiting"}) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "No active workers detected"
+          description: "No active workers processing jobs, but {{ $value }} jobs are waiting in queue"
+
+      - alert: QueueStalled
+        expr: |
+          sum(n8n_redis_queue_depth{status="active"}) > 0 AND
+          (
+            rate(n8n_redis_queue_jobs_total{status="completed"}[10m]) == 0 OR
+            rate(n8n_redis_queue_jobs_total{status="failed"}[10m]) == 0
+          )
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Queue appears stalled"
+          description: "Active jobs detected but no jobs completed or failed in the last 10 minutes"
+
+      - alert: RedisMemoryHigh
+        expr: n8n_redis_memory_usage_bytes > 536870912
+        for: 5m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ $value | humanize1024 }} (threshold: 512MB) for more than 5 minutes"
+

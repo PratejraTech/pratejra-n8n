@@ -34,3 +34,4 @@ export function loadDotenvVault({ repoRoot }) {
     process.chdir(prevCwd);
   }
 }
+

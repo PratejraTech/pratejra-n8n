@@ -29,6 +29,7 @@ except ImportError:
 
 # n8n uses Bull queue library which creates specific Redis key patterns
 BULL_QUEUE_PREFIX = "bull:n8n"
+DLQ_KEY = f"{BULL_QUEUE_PREFIX}:dlq"
 QUEUE_KEYS = {
     "waiting": "wait",
     "active": "active",
@@ -206,6 +207,88 @@ def create_test_job(client: redis.Redis, queue_name: str = "n8n"):
         sys.exit(1)
 
 
+def display_dlq_status(client: redis.Redis):
+    """Display DLQ status."""
+    dlq_key = f"{DLQ_KEY}:jobs"
+    try:
+        count = client.zcard(dlq_key)
+        print(f"\n{'='*60}")
+        print("Dead Letter Queue Status")
+        print(f"{'='*60}\n")
+        print(f"Total DLQ Jobs: {count}")
+        print()
+    except Exception as e:
+        print(f"Error getting DLQ status: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def list_dlq_jobs(client: redis.Redis, limit: int = 20):
+    """List jobs in DLQ."""
+    dlq_key = f"{DLQ_KEY}:jobs"
+    try:
+        import json
+        job_strings = client.zrevrange(dlq_key, 0, limit - 1, withscores=True)
+        
+        print(f"\n{'='*60}")
+        print(f"DLQ Jobs (showing {min(len(job_strings), limit)})")
+        print(f"{'='*60}\n")
+        
+        if not job_strings:
+            print("No jobs in DLQ.")
+            return
+        
+        for idx, (job_str, score) in enumerate(job_strings, 1):
+            try:
+                job = json.loads(job_str)
+                print(f"{idx}. Job ID: {job.get('job_id', 'unknown')}")
+                print(f"   Workflow: {job.get('workflow_name', 'unknown')}")
+                print(f"   Failed At: {job.get('failed_at', 'unknown')}")
+                print(f"   Retry Count: {job.get('retry_count', 0)}")
+                print(f"   Error: {job.get('error_message', 'unknown')[:50]}...")
+                print()
+            except json.JSONDecodeError:
+                print(f"{idx}. Invalid job data")
+                print()
+    except Exception as e:
+        print(f"Error listing DLQ jobs: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def replay_dlq_job(client: redis.Redis, job_id: str):
+    """Replay a job from DLQ back to waiting queue."""
+    dlq_key = f"{DLQ_KEY}:jobs"
+    base_key = f"{BULL_QUEUE_PREFIX}:n8n"
+    wait_key = f"{base_key}:wait"
+    
+    try:
+        import json
+        # Find job in DLQ
+        job_strings = client.zrange(dlq_key, 0, -1, withscores=True)
+        job_to_replay = None
+        
+        for job_str, score in job_strings:
+            job = json.loads(job_str)
+            if job.get("job_id") == job_id:
+                job_to_replay = job
+                break
+        
+        if not job_to_replay:
+            print(f"Job {job_id} not found in DLQ", file=sys.stderr)
+            sys.exit(1)
+        
+        # Re-queue to waiting queue
+        client.zadd(wait_key, {job_id: time.time()})
+        
+        # Remove from DLQ
+        client.zrem(dlq_key, json.dumps(job_to_replay))
+        
+        print(f"✓ Job {job_id} replayed to waiting queue")
+        
+    except Exception as e:
+        print(f"Error replaying job: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -225,6 +308,15 @@ Examples:
   # Health check
   python test_redis_queue.py health
 
+  # DLQ status
+  python test_redis_queue.py dlq-status
+
+  # List DLQ jobs
+  python test_redis_queue.py dlq-list
+
+  # Replay job from DLQ
+  python test_redis_queue.py dlq-replay --job-id job-123
+
   # Connect to remote Redis
   python test_redis_queue.py status --host redis.example.com --port 6379 --password mypass
         """
@@ -232,7 +324,7 @@ Examples:
     
     parser.add_argument(
         "command",
-        choices=["status", "monitor", "test-job", "health"],
+        choices=["status", "monitor", "test-job", "health", "dlq-status", "dlq-list", "dlq-replay"],
         help="Command to execute"
     )
     
@@ -275,6 +367,12 @@ Examples:
         help="Refresh interval in seconds for monitor mode (default: 5)"
     )
     
+    parser.add_argument(
+        "--job-id",
+        default=None,
+        help="Job ID for dlq-replay command"
+    )
+    
     args = parser.parse_args()
     
     # Connect to Redis
@@ -296,8 +394,18 @@ Examples:
     elif args.command == "test-job":
         queue_name = args.queue or "n8n"
         create_test_job(client, queue_name)
+    elif args.command == "dlq-status":
+        display_dlq_status(client)
+    elif args.command == "dlq-list":
+        list_dlq_jobs(client)
+    elif args.command == "dlq-replay":
+        if not args.job_id:
+            print("Error: --job-id required for dlq-replay command", file=sys.stderr)
+            sys.exit(1)
+        replay_dlq_job(client, args.job_id)
 
 
 if __name__ == "__main__":
     main()
+
 

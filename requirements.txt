@@ -7,3 +7,6 @@ PyYAML>=6.0.1
 # Redis client for queue monitoring and testing
 redis>=5.0.0
 
+# Prometheus client for metrics export
+prometheus-client>=0.19.0
+

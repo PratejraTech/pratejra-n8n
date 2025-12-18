@@ -109,3 +109,37 @@ redis:
     enabled: true
     queue_name: "n8n"
     execution_mode: "queue"
+
+# Queue Metrics Configuration
+queue_metrics:
+  # Use n8n's built-in metrics (primary)
+  n8n_metrics_enabled: true
+  n8n_metrics_include_queue: true
+  
+  # Supplemental Redis metrics exporter (optional)
+  redis_exporter_enabled: true
+  redis_exporter_scrape_interval_seconds: 30
+  # Option 1: Push to Push Gateway
+  prometheus_push_gateway: "http://localhost:9091"
+  # Option 2: Expose HTTP endpoint (default port 9090)
+  expose_http_endpoint: true
+  http_port: 9090
+
+# Queue Retry and DLQ Configuration
+queue_retry:
+  enabled: true
+  max_attempts: 5
+  initial_delay_seconds: 1
+  max_delay_seconds: 300
+  backoff_multiplier: 2
+  retryable_errors:
+    - "ConnectionError"
+    - "TimeoutError"
+    - "RateLimitError"
+  
+dlq:
+  enabled: true
+  max_size: 1000
+  alert_threshold: 100
+  retention_days: 30
+  notification_workflow: "notify_slack"

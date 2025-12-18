@@ -417,6 +417,89 @@ Each workflow runbook should include:
 
 ---
 
+## Dead Letter Queue (DLQ) Troubleshooting
+
+### DLQ Size Growing
+
+**Symptoms:** DLQ size exceeds threshold, alerts triggered
+
+**Solutions:**
+1. Check DLQ status: `python ops/scripts/test_redis_queue.py dlq-status`
+2. List DLQ jobs: `python ops/scripts/test_redis_queue.py dlq-list`
+3. Review error patterns: Check error types and workflow names
+4. Investigate root cause: Review failed job error messages
+5. Replay jobs after fix: Use `dlq_job_recovery` workflow or CLI
+
+**Prevention:**
+- Review retry configuration (max_attempts, delays)
+- Ensure external services are healthy
+- Monitor queue failure rates
+
+### Jobs Not Retrying
+
+**Symptoms:** Failed jobs move directly to DLQ without retries
+
+**Solutions:**
+1. Verify DLQ manager is running: `ps aux | grep redis_queue_dlq_manager`
+2. Check retry configuration in environment config
+3. Review DLQ manager logs for errors
+4. Verify Redis connectivity from DLQ manager
+5. Check retry metadata: Jobs should have retry_count tracked
+
+### DLQ Manager Not Processing
+
+**Symptoms:** Failed jobs accumulating, no retries or DLQ movement
+
+**Solutions:**
+1. Check DLQ manager process status
+2. Review DLQ manager logs
+3. Verify Redis connection
+4. Check configuration environment variables
+5. Restart DLQ manager service if needed
+
+### Job Replay Failing
+
+**Symptoms:** Jobs replayed from DLQ fail immediately
+
+**Solutions:**
+1. Review original error message in DLQ job
+2. Verify underlying issue is resolved (external service, credentials, etc.)
+3. Check job payload structure
+4. Review workflow definition for changes
+5. Test with a new job first before replaying DLQ jobs
+
+### High DLQ Alert Frequency
+
+**Symptoms:** Frequent alerts about DLQ threshold
+
+**Solutions:**
+1. Review alert threshold configuration
+2. Investigate root cause of failures
+3. Adjust retry configuration if needed
+4. Consider increasing alert threshold temporarily
+5. Review DLQ retention policy
+
+**Commands:**
+```bash
+# Check DLQ status
+python ops/scripts/test_redis_queue.py dlq-status
+
+# List DLQ jobs with details
+python ops/scripts/test_redis_queue.py dlq-list
+
+# Replay specific job
+python ops/scripts/test_redis_queue.py dlq-replay --job-id <job_id>
+
+# Monitor DLQ
+python ops/scripts/redis_queue_dlq_monitor.py --status
+```
+
+**Related Documentation:**
+- `docs/REDIS_QUEUE_CONFIGURATION.md` - DLQ configuration
+- `docs/ERROR_HANDLING.md` - Queue retry logic
+
+---
+
 ## Emergency Contacts
 
 - **Platform Engineering:** platform-team@example.com
