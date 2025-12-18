@@ -34,9 +34,6 @@ DOMAIN_MAPPINGS = {
     "domains/crm": "crm",
     "domains/infra": "infra",
     "domains/meta": "meta",
-    "platform": "shared",  # Legacy support
-    "domain_crm": "crm",   # Legacy support
-    "domain_infra": "infra", # Legacy support
 }
 
 
@@ -162,9 +159,6 @@ def scan_workflows() -> List[Dict[str, Any]]:
         WORKFLOWS_DIR / "domains" / "crm",
         WORKFLOWS_DIR / "domains" / "infra",
         WORKFLOWS_DIR / "domains" / "meta",
-        WORKFLOWS_DIR / "platform",  # Legacy support
-        WORKFLOWS_DIR / "domain_crm",  # Legacy support
-        WORKFLOWS_DIR / "domain_infra",  # Legacy support
     ]
     
     for domain_dir in domains_dirs:

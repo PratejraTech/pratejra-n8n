@@ -4,3 +4,6 @@
 # YAML parsing for configuration and state files
 PyYAML>=6.0.1
 
+# Redis client for queue monitoring and testing
+redis>=5.0.0
+

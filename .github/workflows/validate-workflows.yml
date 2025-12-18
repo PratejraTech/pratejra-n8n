@@ -114,9 +114,11 @@ jobs:
             "workflows/domains/crm"
             "workflows/domains/infra"
             "workflows/domains/meta"
-            "workflows/platform"
-            "workflows/domain_crm"
-            "workflows/domain_infra"
+            "workflows/active-workflows"
+            "workflows/prod-workflows"
+            "workflows/draft-workflows"
+            "workflows/packs"
+            "workflows/meta"
           )
           
           # Find all workflow JSON files
