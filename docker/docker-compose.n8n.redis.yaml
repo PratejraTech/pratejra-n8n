@@ -77,6 +77,7 @@ services:
       # n8n basic configuration
       N8N_PORT: 5678
       N8N_METRICS: ${N8N_METRICS:-true}
+      N8N_METRICS_INCLUDE_QUEUE_METRICS: ${N8N_METRICS_INCLUDE_QUEUE_METRICS:-true}
       N8N_DIAGNOSTICS_ENABLED: ${N8N_DIAGNOSTICS_ENABLED:-false}
       
       # Queue mode configuration
@@ -131,6 +132,7 @@ services:
       
       # Worker-specific configuration
       N8N_METRICS: ${N8N_METRICS:-true}
+      N8N_METRICS_INCLUDE_QUEUE_METRICS: ${N8N_METRICS_INCLUDE_QUEUE_METRICS:-true}
     volumes:
       - n8n_data:/home/node/.n8n
     healthcheck:
@@ -140,6 +142,36 @@ services:
       retries: 3
     networks:
       - n8n-network
+
+  queue-metrics-exporter:
+    # Optional supplemental Redis queue metrics exporter
+    image: python:3.11-slim
+    container_name: queue-metrics-exporter
+    restart: unless-stopped
+    command: python /app/redis_queue_metrics_exporter.py
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: 0
+      SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-30}
+      # Option 1: Push to Push Gateway
+      PROMETHEUS_PUSH_GATEWAY: ${PROMETHEUS_PUSH_GATEWAY:-}
+      # Option 2: Expose HTTP endpoint for Prometheus scraping
+      EXPOSE_HTTP_PORT: ${EXPOSE_HTTP_PORT:-9090}
+    ports:
+      - "${EXPOSE_HTTP_PORT:-9090}:9090"  # Expose metrics endpoint for Prometheus scraping
+    volumes:
+      - ../ops/scripts:/app
+    networks:
+      - n8n-network  # Same network as Redis and n8n for connectivity
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data:

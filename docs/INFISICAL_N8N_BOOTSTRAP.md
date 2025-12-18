@@ -71,3 +71,4 @@ node ops/infisical/bin/secrets-env.mjs --provider dotenv-vault
 
 - `docker/n8n.env.generated.example` shows the expected shape (no secrets).
 - Do not rotate `N8N_ENCRYPTION_KEY` after n8n has stored credentials.
+

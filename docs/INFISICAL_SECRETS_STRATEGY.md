@@ -73,3 +73,4 @@ Use **dotenv-vault** to manage an encrypted `.env.vault` locally.
 
 - Infisical Universal Auth (Machine Identity): `https://infisical.com/docs/documentation/platform/identities/universal-auth`
 - Infisical Node SDK: `https://infisical.com/docs/sdks/languages/node`
+

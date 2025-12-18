@@ -271,6 +271,17 @@ Scale worker instances independently based on load:
 
 For detailed queue mode setup, see: `docs/REDIS_QUEUE_CONFIGURATION.md`
 
+### Queue Monitoring
+
+Queue health can be monitored via:
+
+1. **n8n Built-in Metrics:** Enable `N8N_METRICS_INCLUDE_QUEUE_METRICS=true` to export queue metrics at `/metrics`
+2. **Supplemental Metrics Exporter:** Use `ops/scripts/redis_queue_metrics_exporter.py` for Redis-level metrics
+3. **Grafana Dashboard:** Import `docs/grafana-dashboards/queue-health.json` for visualization
+4. **Prometheus Alerts:** Configure alerts using `docs/prometheus-alerts/queue-alerts.yml`
+
+See `docs/PROMETHEUS_INTEGRATION.md` for queue metrics details.
+
 ## Backup Configuration
 
 ### Workflow Backups
